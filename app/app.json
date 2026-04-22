@@ -11,7 +11,11 @@
       "web"
     ],
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "output": "static"
+    },
+    "experiments": {
+      "baseUrl": "/evalua_V1_commerce"
     },
     "plugins": [
       "expo-router",
