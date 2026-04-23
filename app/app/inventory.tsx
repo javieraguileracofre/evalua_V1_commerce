@@ -13,7 +13,9 @@ import { Card } from "@/components/Card";
 import { supabase } from "@/lib/supabase";
 import { InventoryItem } from "@/types";
 import { theme } from "@/theme";
-import { downloadCsv, toCsv } from "@/lib/export";
+import { saveOrSharePdfFromBase64 } from "@/lib/export";
+import { formatCurrencyCl, formatIntegerCl } from "@/lib/format";
+import { buildInventoryStockSoldPdfBase64 } from "@/lib/inventoryPdf";
 
 function generateSkuBase(value: string) {
   const normalized = value
@@ -121,14 +123,35 @@ export default function InventoryScreen() {
     Alert.alert("Codigo detectado", `SKU asignado: ${data}`);
   }
 
-  function onExportInventory() {
-    const csv = toCsv(
-      ["id", "sku", "nombre", "stock", "costo"],
-      items.map((item) => [item.id, item.sku, item.name, item.stock, item.cost])
-    );
-    const downloaded = downloadCsv("inventario.csv", csv);
-    if (!downloaded) {
-      Alert.alert("Disponible en web", "La descarga CSV esta disponible en la version web del sistema.");
+  async function onExportInventoryPdf() {
+    if (!items.length) {
+      return Alert.alert("Sin datos", "No hay productos en inventario para exportar.");
+    }
+
+    const { data: posts, error } = await supabase.from("sales_posts").select("inventory_item_id");
+    if (error) return Alert.alert("Error", error.message);
+
+    const soldByItem = new Map<string, number>();
+    for (const row of posts ?? []) {
+      const id = row.inventory_item_id as string;
+      soldByItem.set(id, (soldByItem.get(id) ?? 0) + 1);
+    }
+
+    const rows = items.map((item) => ({
+      name: item.name,
+      stock: item.stock,
+      sold: soldByItem.get(item.id) ?? 0
+    }));
+
+    try {
+      const base64 = buildInventoryStockSoldPdfBase64(rows);
+      const filename = `inventario-evalua-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const ok = await saveOrSharePdfFromBase64(filename, base64);
+      if (!ok) {
+        Alert.alert("PDF", "No se pudo preparar el archivo en este dispositivo.");
+      }
+    } catch (e) {
+      Alert.alert("Error", e instanceof Error ? e.message : "No se pudo generar el PDF.");
     }
   }
 
@@ -142,8 +165,8 @@ export default function InventoryScreen() {
           <Pressable style={styles.smallButton} onPress={load}>
             <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Actualizar</Text>
           </Pressable>
-          <Pressable style={styles.smallButton} onPress={onExportInventory}>
-            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Descargar CSV</Text>
+          <Pressable style={styles.smallButton} onPress={onExportInventoryPdf}>
+            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Descargar PDF</Text>
           </Pressable>
         </View>
       </Card>
@@ -209,8 +232,8 @@ export default function InventoryScreen() {
           <Card>
             <Text style={[styles.itemName, { fontFamily: font.bold }]}>{item.name}</Text>
             <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>SKU: {item.sku}</Text>
-            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Stock: {item.stock}</Text>
-            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Costo: ${item.cost}</Text>
+            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Stock: {formatIntegerCl(item.stock)}</Text>
+            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Costo: {formatCurrencyCl(item.cost)}</Text>
           </Card>
         )}
       />

@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { SalesPost } from "@/types";
 import { theme } from "@/theme";
 import { downloadCsv, toCsv } from "@/lib/export";
+import { formatCurrencyCl, formatIntegerCl } from "@/lib/format";
 
 export default function SalesPostsScreen() {
   const [fontsLoaded] = useFonts({
@@ -258,14 +259,14 @@ export default function SalesPostsScreen() {
             <Pressable key={item.id} style={styles.resultRow} onPress={() => selectInventory(item)}>
               <Text style={[styles.resultTitle, { fontFamily: font.bold }]}>{item.name}</Text>
               <Text style={[styles.resultMeta, item.stock <= 0 && styles.stockDanger, { fontFamily: font.regular }]}>
-                SKU: {item.sku} · Stock: {item.stock}
+                SKU: {item.sku} · Stock: {formatIntegerCl(item.stock)}
               </Text>
             </Pressable>
           ))}
         </View>
         <Text style={[styles.helperText, { fontFamily: font.semi }]}>
           {inventoryItemId
-            ? `Item vinculado: ${inventoryName}${inventoryStock != null ? ` (stock: ${inventoryStock})` : ""}`
+            ? `Item vinculado: ${inventoryName}${inventoryStock != null ? ` (stock: ${formatIntegerCl(inventoryStock)})` : ""}`
             : "Sin item vinculado todavia."}
         </Text>
         {inventoryStock != null && inventoryStock <= 0 ? (
@@ -300,7 +301,7 @@ export default function SalesPostsScreen() {
         renderItem={({ item }) => (
           <Card>
             <Text style={[styles.itemName, { fontFamily: font.bold }]}>{item.title}</Text>
-            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Precio: ${item.sale_price}</Text>
+            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Precio: {formatCurrencyCl(item.sale_price)}</Text>
             <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Estado: {item.status}</Text>
             <Pressable style={styles.linkLikeButton} onPress={() => onExportReceipt(item)}>
               <Text style={[styles.linkLikeButtonText, { fontFamily: font.bold }]}>Descargar comprobante</Text>
