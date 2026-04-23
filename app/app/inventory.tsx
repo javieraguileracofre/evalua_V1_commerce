@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { Link } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { Card } from "@/components/Card";
 import { supabase } from "@/lib/supabase";
 import { InventoryItem } from "@/types";
 import { theme } from "@/theme";
+import { downloadCsv, toCsv } from "@/lib/export";
 
 function generateSkuBase(value: string) {
   const normalized = value
@@ -100,8 +102,32 @@ export default function InventoryScreen() {
     Alert.alert("Codigo detectado", `SKU asignado: ${data}`);
   }
 
+  function onExportInventory() {
+    const csv = toCsv(
+      ["id", "sku", "nombre", "stock", "costo"],
+      items.map((item) => [item.id, item.sku, item.name, item.stock, item.cost])
+    );
+    const downloaded = downloadCsv("inventario.csv", csv);
+    if (!downloaded) {
+      Alert.alert("Disponible en web", "La descarga CSV esta disponible en la version web del sistema.");
+    }
+  }
+
   return (
     <Screen>
+      <Card>
+        <View style={styles.headerRow}>
+          <Link style={styles.linkBack} href="/">
+            Volver al inicio
+          </Link>
+          <Pressable style={styles.smallButton} onPress={load}>
+            <Text style={styles.smallButtonText}>Actualizar</Text>
+          </Pressable>
+          <Pressable style={styles.smallButton} onPress={onExportInventory}>
+            <Text style={styles.smallButtonText}>Descargar CSV</Text>
+          </Pressable>
+        </View>
+      </Card>
       <Card>
         <Text style={styles.title}>Control de Inventario</Text>
         <Text style={styles.label}>Nombre del producto</Text>
@@ -160,6 +186,17 @@ export default function InventoryScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  linkBack: { color: theme.colors.secondary, fontWeight: "700" },
+  smallButton: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "#F8FAFC"
+  },
+  smallButtonText: { color: theme.colors.text, fontWeight: "600" },
   title: { fontSize: 20, fontWeight: "700", marginBottom: 10, color: theme.colors.primary },
   label: { fontSize: 13, fontWeight: "600", color: theme.colors.text, marginBottom: 4 },
   input: {

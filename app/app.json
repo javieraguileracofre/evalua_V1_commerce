@@ -14,9 +14,6 @@
       "bundler": "metro",
       "output": "single"
     },
-    "experiments": {
-      "baseUrl": "/evalua_V1_commerce"
-    },
     "plugins": [
       "expo-router",
       [

@@ -5,7 +5,8 @@
 #    - EXPO_PUBLIC_SUPABASE_URL
 #    - EXPO_PUBLIC_SUPABASE_ANON_KEY (recomendado: JWT anon eyJ... de Legacy API Keys)
 #    - Opcional: EXPO_PUBLIC_SUPABASE_ANON_JWT (si existe, tiene prioridad sobre ANON_KEY)
-# 2) Repo -> Settings -> Pages -> Build and deployment -> Source: GitHub Actions
+# 2) Repo -> Settings -> Pages -> Build and deployment -> Source: Deploy from a branch
+#    Branch: gh-pages / root
 #
 # Luego: Actions -> "Deploy web to GitHub Pages" -> Run workflow (o push a main).
 
@@ -58,3 +59,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: app/dist
           force_orphan: true
+          cname: erp.evaluasoluciones.cl

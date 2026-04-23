@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { Link } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { Card } from "@/components/Card";
 import { supabase } from "@/lib/supabase";
 import { SalesPost } from "@/types";
 import { theme } from "@/theme";
+import { downloadCsv, toCsv } from "@/lib/export";
 
 export default function SalesPostsScreen() {
   const [inventorySku, setInventorySku] = useState("");
@@ -103,8 +105,46 @@ export default function SalesPostsScreen() {
     resolveInventoryBySku(data);
   }
 
+  function onExportSales() {
+    const csv = toCsv(
+      ["id", "inventory_item_id", "titulo", "precio_venta", "estado"],
+      posts.map((post) => [post.id, post.inventory_item_id, post.title, post.sale_price, post.status])
+    );
+    const downloaded = downloadCsv("ventas.csv", csv);
+    if (!downloaded) {
+      Alert.alert("Disponible en web", "La descarga CSV esta disponible en la version web del sistema.");
+    }
+  }
+
+  function onExportReceipt(post: SalesPost) {
+    const csv = toCsv(["campo", "valor"], [
+      ["id_venta", post.id],
+      ["titulo", post.title],
+      ["item_id", post.inventory_item_id],
+      ["precio", post.sale_price],
+      ["estado", post.status]
+    ]);
+    const downloaded = downloadCsv(`comprobante-venta-${post.id}.csv`, csv);
+    if (!downloaded) {
+      Alert.alert("Disponible en web", "La descarga del comprobante esta disponible en la version web.");
+    }
+  }
+
   return (
     <Screen>
+      <Card>
+        <View style={styles.headerRow}>
+          <Link style={styles.linkBack} href="/">
+            Volver al inicio
+          </Link>
+          <Pressable style={styles.smallButton} onPress={load}>
+            <Text style={styles.smallButtonText}>Actualizar</Text>
+          </Pressable>
+          <Pressable style={styles.smallButton} onPress={onExportSales}>
+            <Text style={styles.smallButtonText}>Descargar ventas CSV</Text>
+          </Pressable>
+        </View>
+      </Card>
       <Card>
         <Text style={styles.title}>Post de Venta</Text>
         <Text style={styles.label}>SKU del item en inventario</Text>
@@ -156,6 +196,9 @@ export default function SalesPostsScreen() {
             <Text style={styles.itemName}>{item.title}</Text>
             <Text style={styles.itemMeta}>Precio: ${item.sale_price}</Text>
             <Text style={styles.itemMeta}>Estado: {item.status}</Text>
+            <Pressable style={styles.linkLikeButton} onPress={() => onExportReceipt(item)}>
+              <Text style={styles.linkLikeButtonText}>Descargar comprobante</Text>
+            </Pressable>
           </Card>
         )}
       />
@@ -164,6 +207,17 @@ export default function SalesPostsScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  linkBack: { color: theme.colors.secondary, fontWeight: "700" },
+  smallButton: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "#F8FAFC"
+  },
+  smallButtonText: { color: theme.colors.text, fontWeight: "600" },
   title: { fontSize: 20, fontWeight: "700", marginBottom: 10, color: theme.colors.primary },
   label: { fontSize: 13, fontWeight: "600", color: theme.colors.text, marginBottom: 4 },
   input: {
@@ -187,5 +241,7 @@ const styles = StyleSheet.create({
   scannerWrap: { marginBottom: 12 },
   scanner: { width: "100%", height: 260, borderRadius: theme.radius.sm, overflow: "hidden", marginBottom: 10 },
   itemName: { fontWeight: "700", color: theme.colors.text },
-  itemMeta: { color: theme.colors.muted, marginTop: 2 }
+  itemMeta: { color: theme.colors.muted, marginTop: 2 },
+  linkLikeButton: { marginTop: 8 },
+  linkLikeButtonText: { color: theme.colors.secondary, fontWeight: "700" }
 });
