@@ -366,6 +366,9 @@ export default function IndexScreen() {
           <Link style={[styles.sessionLink, { fontFamily: font.extra }]} href="/sales-posts">
             Ir a publicaciones de venta
           </Link>
+          <Link style={[styles.sessionLink, { fontFamily: font.extra }]} href="/quick-results">
+            Ir a resultados rapidos
+          </Link>
         </>
       )}
     </View>
