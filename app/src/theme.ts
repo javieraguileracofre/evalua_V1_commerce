@@ -1,14 +1,15 @@
 export const theme = {
   colors: {
-    background: "#F4F6FA",
-    surface: "#FFFFFF",
-    primary: "#1E3A8A",
-    secondary: "#2563EB",
-    text: "#0F172A",
-    muted: "#64748B",
-    success: "#16A34A",
-    danger: "#DC2626",
-    border: "#E2E8F0"
+    background: "#060b14",
+    surface: "rgba(15, 23, 42, 0.88)",
+    surfaceAlt: "#0f172a",
+    primary: "#1f4168",
+    secondary: "#c4a35a",
+    text: "#e8eef8",
+    muted: "#8b95ab",
+    success: "#22c55e",
+    danger: "#ef4444",
+    border: "rgba(148, 163, 184, 0.22)"
   },
   spacing: (n: number) => n * 8,
   radius: {

@@ -21,7 +21,8 @@
         {
           "cameraPermission": "Permite usar la camara para escanear codigos de barras."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "ios": {
       "supportsTablet": true,

@@ -12,5 +12,5 @@ export function Screen({ children }: PropsWithChildren) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { flex: 1, padding: theme.spacing(2) }
+  container: { flex: 1, padding: theme.spacing(2), backgroundColor: theme.colors.background }
 });

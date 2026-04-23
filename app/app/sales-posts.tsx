@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  useFonts
+} from "@expo-google-fonts/plus-jakarta-sans";
 import { Link } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { Card } from "@/components/Card";
@@ -10,6 +16,19 @@ import { theme } from "@/theme";
 import { downloadCsv, toCsv } from "@/lib/export";
 
 export default function SalesPostsScreen() {
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold
+  });
+  const font = fontsLoaded
+    ? {
+        regular: "PlusJakartaSans_400Regular" as const,
+        semi: "PlusJakartaSans_600SemiBold" as const,
+        bold: "PlusJakartaSans_700Bold" as const
+      }
+    : { regular: undefined, semi: undefined, bold: undefined };
+
   type InventoryOption = { id: string; name: string; sku: string; stock: number };
 
   const [inventorySku, setInventorySku] = useState("");
@@ -179,23 +198,24 @@ export default function SalesPostsScreen() {
     <Screen>
       <Card>
         <View style={styles.headerRow}>
-          <Link style={styles.linkBack} href="/">
+          <Link style={[styles.linkBack, { fontFamily: font.bold }]} href="/">
             Volver al inicio
           </Link>
           <Pressable style={styles.smallButton} onPress={load}>
-            <Text style={styles.smallButtonText}>Actualizar</Text>
+            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Actualizar</Text>
           </Pressable>
           <Pressable style={styles.smallButton} onPress={onExportSales}>
-            <Text style={styles.smallButtonText}>Descargar ventas CSV</Text>
+            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Descargar ventas CSV</Text>
           </Pressable>
         </View>
       </Card>
       <Card>
-        <Text style={styles.title}>Post de Venta</Text>
-        <Text style={styles.label}>SKU del item en inventario</Text>
+        <Text style={[styles.title, { fontFamily: font.bold }]}>Post de Venta</Text>
+        <Text style={[styles.label, { fontFamily: font.semi }]}>SKU del item en inventario</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { fontFamily: font.regular }]}
           placeholder="Ingresa o escanea el codigo de barras"
+          placeholderTextColor={theme.colors.muted}
           value={inventorySku}
           onChangeText={(value) => {
             setInventorySku(value);
@@ -205,7 +225,7 @@ export default function SalesPostsScreen() {
           onBlur={() => resolveInventoryBySku(inventorySku)}
         />
         <Pressable style={styles.buttonSecondary} onPress={openScanner}>
-          <Text style={styles.buttonSecondaryText}>Escanear codigo de barras con camara</Text>
+          <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Escanear codigo de barras con camara</Text>
         </Pressable>
         {showScanner ? (
           <View style={styles.scannerWrap}>
@@ -216,14 +236,15 @@ export default function SalesPostsScreen() {
               onBarcodeScanned={onBarcodeScanned}
             />
             <Pressable style={styles.buttonSecondary} onPress={() => setShowScanner(false)}>
-              <Text style={styles.buttonSecondaryText}>Cerrar lector</Text>
+              <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Cerrar lector</Text>
             </Pressable>
           </View>
         ) : null}
-        <Text style={styles.label}>Buscar y seleccionar inventario disponible</Text>
+        <Text style={[styles.label, { fontFamily: font.semi }]}>Buscar y seleccionar inventario disponible</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { fontFamily: font.regular }]}
           placeholder="Buscar por nombre o SKU"
+          placeholderTextColor={theme.colors.muted}
           value={inventorySearch}
           onChangeText={(value) => {
             setInventorySearch(value);
@@ -235,28 +256,41 @@ export default function SalesPostsScreen() {
         <View style={styles.searchResultsWrap}>
           {filteredInventory.map((item) => (
             <Pressable key={item.id} style={styles.resultRow} onPress={() => selectInventory(item)}>
-              <Text style={styles.resultTitle}>{item.name}</Text>
-              <Text style={[styles.resultMeta, item.stock <= 0 && styles.stockDanger]}>
+              <Text style={[styles.resultTitle, { fontFamily: font.bold }]}>{item.name}</Text>
+              <Text style={[styles.resultMeta, item.stock <= 0 && styles.stockDanger, { fontFamily: font.regular }]}>
                 SKU: {item.sku} · Stock: {item.stock}
               </Text>
             </Pressable>
           ))}
         </View>
-        <Text style={styles.helperText}>
+        <Text style={[styles.helperText, { fontFamily: font.semi }]}>
           {inventoryItemId
             ? `Item vinculado: ${inventoryName}${inventoryStock != null ? ` (stock: ${inventoryStock})` : ""}`
             : "Sin item vinculado todavia."}
         </Text>
         {inventoryStock != null && inventoryStock <= 0 ? (
-          <Text style={styles.stockWarning}>Stock actual en 0. Debes comprar y abastecerte antes de vender.</Text>
+          <Text style={[styles.stockWarning, { fontFamily: font.bold }]}>Stock actual en 0. Debes comprar y abastecerte antes de vender.</Text>
         ) : null}
 
-        <Text style={styles.label}>Titulo de la publicacion</Text>
-        <TextInput style={styles.input} placeholder="Ej: Cuaderno universitario 100 hojas" value={title} onChangeText={setTitle} />
-        <Text style={styles.label}>Precio de venta (CLP)</Text>
-        <TextInput style={styles.input} placeholder="Ej: 2500" value={price} onChangeText={setPrice} keyboardType="numeric" />
+        <Text style={[styles.label, { fontFamily: font.semi }]}>Titulo de la publicacion</Text>
+        <TextInput
+          style={[styles.input, { fontFamily: font.regular }]}
+          placeholder="Ej: Cuaderno universitario 100 hojas"
+          placeholderTextColor={theme.colors.muted}
+          value={title}
+          onChangeText={setTitle}
+        />
+        <Text style={[styles.label, { fontFamily: font.semi }]}>Precio de venta (CLP)</Text>
+        <TextInput
+          style={[styles.input, { fontFamily: font.regular }]}
+          placeholder="Ej: 2500"
+          placeholderTextColor={theme.colors.muted}
+          value={price}
+          onChangeText={setPrice}
+          keyboardType="numeric"
+        />
         <Pressable style={styles.button} onPress={createPost}>
-          <Text style={styles.buttonText}>Publicar</Text>
+          <Text style={[styles.buttonText, { fontFamily: font.bold }]}>Publicar</Text>
         </Pressable>
       </Card>
 
@@ -265,11 +299,11 @@ export default function SalesPostsScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card>
-            <Text style={styles.itemName}>{item.title}</Text>
-            <Text style={styles.itemMeta}>Precio: ${item.sale_price}</Text>
-            <Text style={styles.itemMeta}>Estado: {item.status}</Text>
+            <Text style={[styles.itemName, { fontFamily: font.bold }]}>{item.title}</Text>
+            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Precio: ${item.sale_price}</Text>
+            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Estado: {item.status}</Text>
             <Pressable style={styles.linkLikeButton} onPress={() => onExportReceipt(item)}>
-              <Text style={styles.linkLikeButtonText}>Descargar comprobante</Text>
+              <Text style={[styles.linkLikeButtonText, { fontFamily: font.bold }]}>Descargar comprobante</Text>
             </Pressable>
           </Card>
         )}
@@ -287,17 +321,19 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.sm,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    backgroundColor: "#F8FAFC"
+    backgroundColor: theme.colors.surfaceAlt
   },
   smallButtonText: { color: theme.colors.text, fontWeight: "600" },
-  title: { fontSize: 20, fontWeight: "700", marginBottom: 10, color: theme.colors.primary },
+  title: { fontSize: 20, fontWeight: "700", marginBottom: 10, color: theme.colors.text },
   label: { fontSize: 13, fontWeight: "600", color: theme.colors.text, marginBottom: 4 },
   input: {
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.radius.sm,
     padding: 10,
-    marginBottom: 8
+    marginBottom: 8,
+    backgroundColor: theme.colors.surfaceAlt,
+    color: theme.colors.text
   },
   helperText: { color: theme.colors.muted, marginBottom: 10, fontWeight: "600" },
   searchResultsWrap: { marginBottom: 8 },
@@ -307,22 +343,23 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.sm,
     padding: 8,
     marginBottom: 6,
-    backgroundColor: "#F8FAFC"
+    backgroundColor: theme.colors.surfaceAlt
   },
   resultTitle: { color: theme.colors.text, fontWeight: "700" },
   resultMeta: { color: theme.colors.muted, marginTop: 2 },
   stockDanger: { color: theme.colors.danger, fontWeight: "700" },
   stockWarning: { color: theme.colors.danger, fontWeight: "700", marginBottom: 10 },
-  button: { backgroundColor: theme.colors.success, borderRadius: theme.radius.sm, padding: 12 },
+  button: { backgroundColor: theme.colors.primary, borderRadius: theme.radius.sm, padding: 12 },
   buttonText: { color: "#fff", textAlign: "center", fontWeight: "700" },
   buttonSecondary: {
     borderWidth: 1,
-    borderColor: theme.colors.primary,
+    borderColor: theme.colors.secondary,
     borderRadius: theme.radius.sm,
     padding: 10,
-    marginBottom: 10
+    marginBottom: 10,
+    backgroundColor: "rgba(196, 163, 90, 0.1)"
   },
-  buttonSecondaryText: { color: theme.colors.primary, textAlign: "center", fontWeight: "700" },
+  buttonSecondaryText: { color: theme.colors.secondary, textAlign: "center", fontWeight: "700" },
   scannerWrap: { marginBottom: 12 },
   scanner: { width: "100%", height: 260, borderRadius: theme.radius.sm, overflow: "hidden", marginBottom: 10 },
   itemName: { fontWeight: "700", color: theme.colors.text },

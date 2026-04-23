@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  useFonts
+} from "@expo-google-fonts/plus-jakarta-sans";
 import { Link } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { Card } from "@/components/Card";
@@ -25,6 +31,19 @@ function generateSkuBase(value: string) {
 }
 
 export default function InventoryScreen() {
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold
+  });
+  const font = fontsLoaded
+    ? {
+        regular: "PlusJakartaSans_400Regular" as const,
+        semi: "PlusJakartaSans_600SemiBold" as const,
+        bold: "PlusJakartaSans_700Bold" as const
+      }
+    : { regular: undefined, semi: undefined, bold: undefined };
+
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
   const [stock, setStock] = useState("0");
@@ -117,55 +136,69 @@ export default function InventoryScreen() {
     <Screen>
       <Card>
         <View style={styles.headerRow}>
-          <Link style={styles.linkBack} href="/">
+          <Link style={[styles.linkBack, { fontFamily: font.bold }]} href="/">
             Volver al inicio
           </Link>
           <Pressable style={styles.smallButton} onPress={load}>
-            <Text style={styles.smallButtonText}>Actualizar</Text>
+            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Actualizar</Text>
           </Pressable>
           <Pressable style={styles.smallButton} onPress={onExportInventory}>
-            <Text style={styles.smallButtonText}>Descargar CSV</Text>
+            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Descargar CSV</Text>
           </Pressable>
         </View>
       </Card>
       <Card>
-        <Text style={styles.title}>Control de Inventario</Text>
-        <Text style={styles.label}>Nombre del producto</Text>
-        <TextInput style={styles.input} placeholder="Ej: Cuaderno universitario" value={name} onChangeText={handleNameChange} />
+        <Text style={[styles.title, { fontFamily: font.bold }]}>Control de Inventario</Text>
+        <Text style={[styles.label, { fontFamily: font.semi }]}>Nombre del producto</Text>
+        <TextInput
+          style={[styles.input, { fontFamily: font.regular }]}
+          placeholder="Ej: Cuaderno universitario"
+          placeholderTextColor={theme.colors.muted}
+          value={name}
+          onChangeText={handleNameChange}
+        />
 
-        <Text style={styles.label}>SKU o codigo interno</Text>
-        <TextInput style={styles.input} placeholder="Se genera automatico (editable)" value={sku} onChangeText={handleSkuChange} />
+        <Text style={[styles.label, { fontFamily: font.semi }]}>SKU o codigo interno</Text>
+        <TextInput
+          style={[styles.input, { fontFamily: font.regular }]}
+          placeholder="Se genera automatico (editable)"
+          placeholderTextColor={theme.colors.muted}
+          value={sku}
+          onChangeText={handleSkuChange}
+        />
         <Pressable style={styles.buttonSecondary} onPress={openScanner}>
-          <Text style={styles.buttonSecondaryText}>Escanear codigo de barras con camara</Text>
+          <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Escanear codigo de barras con camara</Text>
         </Pressable>
         {showScanner ? (
           <View style={styles.scannerWrap}>
             <CameraView style={styles.scanner} facing="back" barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "code128", "upc_a", "upc_e", "qr"] }} onBarcodeScanned={onBarcodeScanned} />
             <Pressable style={styles.buttonSecondary} onPress={() => setShowScanner(false)}>
-              <Text style={styles.buttonSecondaryText}>Cerrar lector</Text>
+              <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Cerrar lector</Text>
             </Pressable>
           </View>
         ) : null}
 
-        <Text style={styles.label}>Cantidad en stock</Text>
+        <Text style={[styles.label, { fontFamily: font.semi }]}>Cantidad en stock</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { fontFamily: font.regular }]}
           placeholder="Ej: 100"
+          placeholderTextColor={theme.colors.muted}
           value={stock}
           onChangeText={setStock}
           keyboardType="numeric"
         />
 
-        <Text style={styles.label}>Costo unitario (CLP)</Text>
+        <Text style={[styles.label, { fontFamily: font.semi }]}>Costo unitario (CLP)</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { fontFamily: font.regular }]}
           placeholder="Ej: 1500"
+          placeholderTextColor={theme.colors.muted}
           value={cost}
           onChangeText={setCost}
           keyboardType="numeric"
         />
         <Pressable style={styles.button} onPress={createItem}>
-          <Text style={styles.buttonText}>Guardar item</Text>
+          <Text style={[styles.buttonText, { fontFamily: font.bold }]}>Guardar item</Text>
         </Pressable>
       </Card>
 
@@ -174,10 +207,10 @@ export default function InventoryScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Card>
-            <Text style={styles.itemName}>{item.name}</Text>
-            <Text style={styles.itemMeta}>SKU: {item.sku}</Text>
-            <Text style={styles.itemMeta}>Stock: {item.stock}</Text>
-            <Text style={styles.itemMeta}>Costo: ${item.cost}</Text>
+            <Text style={[styles.itemName, { fontFamily: font.bold }]}>{item.name}</Text>
+            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>SKU: {item.sku}</Text>
+            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Stock: {item.stock}</Text>
+            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Costo: ${item.cost}</Text>
           </Card>
         )}
       />
@@ -194,28 +227,31 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.sm,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    backgroundColor: "#F8FAFC"
+    backgroundColor: theme.colors.surfaceAlt
   },
   smallButtonText: { color: theme.colors.text, fontWeight: "600" },
-  title: { fontSize: 20, fontWeight: "700", marginBottom: 10, color: theme.colors.primary },
+  title: { fontSize: 20, fontWeight: "700", marginBottom: 10, color: theme.colors.text },
   label: { fontSize: 13, fontWeight: "600", color: theme.colors.text, marginBottom: 4 },
   input: {
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.radius.sm,
     padding: 10,
-    marginBottom: 8
+    marginBottom: 8,
+    backgroundColor: theme.colors.surfaceAlt,
+    color: theme.colors.text
   },
   button: { backgroundColor: theme.colors.primary, borderRadius: theme.radius.sm, padding: 12 },
   buttonText: { color: "#fff", textAlign: "center", fontWeight: "700" },
   buttonSecondary: {
     borderWidth: 1,
-    borderColor: theme.colors.primary,
+    borderColor: theme.colors.secondary,
     borderRadius: theme.radius.sm,
     padding: 10,
-    marginBottom: 10
+    marginBottom: 10,
+    backgroundColor: "rgba(196, 163, 90, 0.1)"
   },
-  buttonSecondaryText: { color: theme.colors.primary, textAlign: "center", fontWeight: "700" },
+  buttonSecondaryText: { color: theme.colors.secondary, textAlign: "center", fontWeight: "700" },
   scannerWrap: { marginBottom: 12 },
   scanner: { width: "100%", height: 260, borderRadius: theme.radius.sm, overflow: "hidden", marginBottom: 10 },
   itemName: { fontWeight: "700", color: theme.colors.text },
