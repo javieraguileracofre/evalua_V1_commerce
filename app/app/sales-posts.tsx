@@ -13,8 +13,9 @@ import { Card } from "@/components/Card";
 import { supabase } from "@/lib/supabase";
 import { SalesPost } from "@/types";
 import { theme } from "@/theme";
-import { downloadCsv, toCsv } from "@/lib/export";
+import { saveOrSharePdfFromBase64 } from "@/lib/export";
 import { formatCurrencyCl, formatIntegerCl } from "@/lib/format";
+import { buildSaleReceiptPdfDataUri, buildSalesPdfDataUri } from "@/lib/salesPdf";
 
 export default function SalesPostsScreen() {
   const [fontsLoaded] = useFonts({
@@ -170,28 +171,40 @@ export default function SalesPostsScreen() {
     })
     .slice(0, 8);
 
-  function onExportSales() {
-    const csv = toCsv(
-      ["id", "inventory_item_id", "titulo", "precio_venta", "estado"],
-      posts.map((post) => [post.id, post.inventory_item_id, post.title, post.sale_price, post.status])
-    );
-    const downloaded = downloadCsv("ventas.csv", csv);
-    if (!downloaded) {
-      Alert.alert("Disponible en web", "La descarga CSV esta disponible en la version web del sistema.");
+  async function onExportSalesPdf() {
+    if (!posts.length) {
+      return Alert.alert("Sin datos", "No hay publicaciones de venta para exportar.");
+    }
+
+    try {
+      const dataUri = buildSalesPdfDataUri(
+        posts.map((post) => ({
+          title: post.title,
+          price: post.sale_price,
+          status: post.status
+        }))
+      );
+      const filename = `ventas-evalua-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const ok = await saveOrSharePdfFromBase64(filename, dataUri);
+      if (!ok) Alert.alert("PDF", "No se pudo preparar el archivo en este dispositivo.");
+    } catch (e) {
+      Alert.alert("Error", e instanceof Error ? e.message : "No se pudo generar el PDF.");
     }
   }
 
-  function onExportReceipt(post: SalesPost) {
-    const csv = toCsv(["campo", "valor"], [
-      ["id_venta", post.id],
-      ["titulo", post.title],
-      ["item_id", post.inventory_item_id],
-      ["precio", post.sale_price],
-      ["estado", post.status]
-    ]);
-    const downloaded = downloadCsv(`comprobante-venta-${post.id}.csv`, csv);
-    if (!downloaded) {
-      Alert.alert("Disponible en web", "La descarga del comprobante esta disponible en la version web.");
+  async function onExportReceipt(post: SalesPost) {
+    try {
+      const dataUri = buildSaleReceiptPdfDataUri({
+        id: post.id,
+        title: post.title,
+        inventoryItemId: post.inventory_item_id,
+        salePrice: post.sale_price,
+        status: post.status
+      });
+      const ok = await saveOrSharePdfFromBase64(`comprobante-venta-${post.id}.pdf`, dataUri);
+      if (!ok) Alert.alert("PDF", "No se pudo preparar el comprobante en este dispositivo.");
+    } catch (e) {
+      Alert.alert("Error", e instanceof Error ? e.message : "No se pudo generar el comprobante.");
     }
   }
 
@@ -205,8 +218,8 @@ export default function SalesPostsScreen() {
           <Pressable style={styles.smallButton} onPress={load}>
             <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Actualizar</Text>
           </Pressable>
-          <Pressable style={styles.smallButton} onPress={onExportSales}>
-            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Descargar ventas CSV</Text>
+          <Pressable style={styles.smallButton} onPress={onExportSalesPdf}>
+            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Descargar ventas PDF</Text>
           </Pressable>
         </View>
       </Card>
@@ -304,7 +317,7 @@ export default function SalesPostsScreen() {
             <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Precio: {formatCurrencyCl(item.sale_price)}</Text>
             <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Estado: {item.status}</Text>
             <Pressable style={styles.linkLikeButton} onPress={() => onExportReceipt(item)}>
-              <Text style={[styles.linkLikeButtonText, { fontFamily: font.bold }]}>Descargar comprobante</Text>
+              <Text style={[styles.linkLikeButtonText, { fontFamily: font.bold }]}>Descargar comprobante PDF</Text>
             </Pressable>
           </Card>
         )}

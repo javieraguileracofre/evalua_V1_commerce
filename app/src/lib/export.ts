@@ -28,32 +28,30 @@ export function downloadCsv(filename: string, csvContent: string) {
   return true;
 }
 
-/** Descarga (web) o comparte / guarda (nativo) un PDF a partir de base64 sin prefijo data:. */
-export async function saveOrSharePdfFromBase64(filename: string, base64: string): Promise<boolean> {
+/** Descarga (web) o comparte / guarda (nativo) un PDF desde base64 o data URI. */
+export async function saveOrSharePdfFromBase64(filename: string, base64OrDataUri: string): Promise<boolean> {
   const safeName = filename.replace(/[/\\?%*:|"<>]/g, "-");
+  const fileNameWithExt = safeName.endsWith(".pdf") ? safeName : `${safeName}.pdf`;
+  const dataUriPrefix = "data:application/pdf;";
+  const isDataUri = base64OrDataUri.startsWith(dataUriPrefix);
+  const base64 = isDataUri ? base64OrDataUri.split(",", 2)[1] ?? "" : base64OrDataUri;
 
   if (Platform.OS === "web") {
-    if (typeof atob === "undefined") return false;
-    const binary = atob(base64);
-    const len = binary.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
-    const blob = new Blob([bytes], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
+    const url = isDataUri ? base64OrDataUri : `data:application/pdf;base64,${base64}`;
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", safeName.endsWith(".pdf") ? safeName : `${safeName}.pdf`);
+    link.setAttribute("download", fileNameWithExt);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    if (!isDataUri) URL.revokeObjectURL(url);
     return true;
   }
 
   const cacheDir = FileSystem.cacheDirectory;
   if (!cacheDir) return false;
 
-  const uri = `${cacheDir}${safeName.endsWith(".pdf") ? safeName : `${safeName}.pdf`}`;
+  const uri = `${cacheDir}${fileNameWithExt}`;
   await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
 
   if (await Sharing.isAvailableAsync()) {

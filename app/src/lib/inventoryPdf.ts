@@ -39,5 +39,5 @@ export function buildInventoryStockSoldPdfBase64(rows: InventoryPdfRow[]): strin
     margin: { left: 14, right: 14 }
   });
 
-  return doc.output("base64");
+  return doc.output("datauristring");
 }
