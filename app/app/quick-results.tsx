@@ -28,6 +28,7 @@ type SaleLite = {
 };
 
 type ChartPoint = { label: string; value: number };
+type QuickPeriod = "today" | "month" | "all";
 
 function monthKey(date: Date) {
   const y = date.getFullYear();
@@ -99,6 +100,7 @@ export default function QuickResultsScreen() {
 
   const [inventory, setInventory] = useState<InventoryLite[]>([]);
   const [sales, setSales] = useState<SaleLite[]>([]);
+  const [period, setPeriod] = useState<QuickPeriod>("month");
 
   useEffect(() => {
     load();
@@ -117,12 +119,23 @@ export default function QuickResultsScreen() {
     setSales((salesRes.data as SaleLite[]) ?? []);
   }
 
-  const { ventasTotal, comprasTotal, resultado, stockDisponible, monthlyAccumulated, dailyAccumulated } = useMemo(() => {
-    const ventas = sales.reduce((acc, s) => acc + Number(s.sale_price ?? 0), 0);
+  const { ventasTotal, comprasTotal, resultado, stockDisponible, monthlyAccumulated, dailyAccumulated, periodLabel } = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const salesFiltered = sales.filter((s) => {
+      const d = new Date(s.created_at);
+      if (period === "today") return d >= todayStart;
+      if (period === "month") return d >= monthStart;
+      return true;
+    });
+
+    const ventas = salesFiltered.reduce((acc, s) => acc + Number(s.sale_price ?? 0), 0);
     const compras = inventory.reduce((acc, item) => acc + Number(item.stock ?? 0) * Number(item.cost ?? 0), 0);
     const stock = inventory.reduce((acc, item) => acc + Number(item.stock ?? 0), 0);
-
-    const now = new Date();
 
     const monthDates: Date[] = [];
     for (let i = 11; i >= 0; i--) {
@@ -131,7 +144,7 @@ export default function QuickResultsScreen() {
     const monthlyMap = new Map<string, number>();
     for (const d of monthDates) monthlyMap.set(monthKey(d), 0);
 
-    for (const sale of sales) {
+    for (const sale of salesFiltered) {
       const d = new Date(sale.created_at);
       const key = monthKey(d);
       if (monthlyMap.has(key)) {
@@ -157,7 +170,7 @@ export default function QuickResultsScreen() {
     const dailyMap = new Map<string, number>();
     for (const d of dayDates) dailyMap.set(dayKey(d), 0);
 
-    for (const sale of sales) {
+    for (const sale of salesFiltered) {
       const d = new Date(sale.created_at);
       d.setHours(0, 0, 0, 0);
       const key = dayKey(d);
@@ -180,9 +193,11 @@ export default function QuickResultsScreen() {
       resultado: ventas - compras,
       stockDisponible: stock,
       monthlyAccumulated: monthlyPoints,
-      dailyAccumulated: dailyPoints
+      dailyAccumulated: dailyPoints,
+      periodLabel:
+        period === "today" ? "Hoy" : period === "month" ? "Mes en curso" : "Acumulado historico"
     };
-  }, [inventory, sales]);
+  }, [inventory, sales, period]);
 
   return (
     <Screen>
@@ -194,16 +209,53 @@ export default function QuickResultsScreen() {
             </Link>
             <Text style={[styles.headerTitle, { fontFamily: font.bold }]}>Resultados rapidos</Text>
           </View>
+          <View style={styles.filterRow}>
+            <Text style={[styles.filterLabel, { fontFamily: font.semi }]}>Periodo:</Text>
+            <View style={styles.filterButtons}>
+              <Text
+                onPress={() => setPeriod("today")}
+                style={[
+                  styles.filterButton,
+                  { fontFamily: font.semi },
+                  period === "today" && styles.filterButtonActive
+                ]}
+              >
+                Hoy
+              </Text>
+              <Text
+                onPress={() => setPeriod("month")}
+                style={[
+                  styles.filterButton,
+                  { fontFamily: font.semi },
+                  period === "month" && styles.filterButtonActive
+                ]}
+              >
+                Mes en curso
+              </Text>
+              <Text
+                onPress={() => setPeriod("all")}
+                style={[
+                  styles.filterButton,
+                  { fontFamily: font.semi },
+                  period === "all" && styles.filterButtonActive
+                ]}
+              >
+                Acumulado
+              </Text>
+            </View>
+          </View>
         </Card>
 
         <View style={styles.kpiGrid}>
           <Card>
             <Text style={[styles.kpiLabel, { fontFamily: font.semi }]}>Ventas</Text>
             <Text style={[styles.kpiValue, { fontFamily: font.bold }]}>{formatCurrencyCl(ventasTotal)}</Text>
+            <Text style={[styles.kpiSub, { fontFamily: font.regular }]}>{periodLabel}</Text>
           </Card>
           <Card>
             <Text style={[styles.kpiLabel, { fontFamily: font.semi }]}>Compras</Text>
             <Text style={[styles.kpiValue, { fontFamily: font.bold }]}>{formatCurrencyCl(comprasTotal)}</Text>
+            <Text style={[styles.kpiSub, { fontFamily: font.regular }]}>Valor inventario actual</Text>
           </Card>
           <Card>
             <Text style={[styles.kpiLabel, { fontFamily: font.semi }]}>Resultado</Text>
@@ -216,6 +268,7 @@ export default function QuickResultsScreen() {
             >
               {formatCurrencyCl(resultado)}
             </Text>
+            <Text style={[styles.kpiSub, { fontFamily: font.regular }]}>{periodLabel}</Text>
           </Card>
         </View>
 
@@ -229,13 +282,13 @@ export default function QuickResultsScreen() {
 
         <BarChart
           title="Acumulado de ventas mensuales"
-          subtitle="Acumulado de los ultimos 12 meses"
+          subtitle={`Acumulado de los ultimos 12 meses (${periodLabel.toLowerCase()})`}
           points={monthlyAccumulated}
         />
 
         <BarChart
           title="Acumulado de ventas ultimos 10 dias"
-          subtitle="Acumulado diario en la ventana reciente"
+          subtitle={`Acumulado diario en la ventana reciente (${periodLabel.toLowerCase()})`}
           points={dailyAccumulated}
         />
       </ScrollView>
@@ -247,9 +300,28 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
   backLink: { color: theme.colors.secondary, fontWeight: "700" },
   headerTitle: { color: theme.colors.text, fontSize: 20, fontWeight: "700" },
+  filterRow: { marginTop: 12, gap: 8 },
+  filterLabel: { color: theme.colors.muted, fontSize: 12 },
+  filterButtons: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  filterButton: {
+    color: theme.colors.secondary,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: theme.colors.surfaceAlt,
+    overflow: "hidden"
+  },
+  filterButtonActive: {
+    color: theme.colors.text,
+    borderColor: theme.colors.secondary,
+    backgroundColor: "rgba(196, 163, 90, 0.2)"
+  },
   kpiGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   kpiLabel: { color: theme.colors.muted, fontSize: 13, marginBottom: 6 },
   kpiValue: { color: theme.colors.text, fontSize: 22, fontWeight: "700" },
+  kpiSub: { color: theme.colors.muted, fontSize: 11, marginTop: 4 },
   positive: { color: theme.colors.success },
   negative: { color: theme.colors.danger },
   sectionTitle: { color: theme.colors.text, fontSize: 17, fontWeight: "700", marginBottom: 8 },
