@@ -10,9 +10,14 @@ import { theme } from "@/theme";
 import { downloadCsv, toCsv } from "@/lib/export";
 
 export default function SalesPostsScreen() {
+  type InventoryOption = { id: string; name: string; sku: string; stock: number };
+
   const [inventorySku, setInventorySku] = useState("");
   const [inventoryItemId, setInventoryItemId] = useState("");
   const [inventoryName, setInventoryName] = useState("");
+  const [inventoryStock, setInventoryStock] = useState<number | null>(null);
+  const [inventorySearch, setInventorySearch] = useState("");
+  const [inventoryOptions, setInventoryOptions] = useState<InventoryOption[]>([]);
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("0");
   const [posts, setPosts] = useState<SalesPost[]>([]);
@@ -28,19 +33,36 @@ export default function SalesPostsScreen() {
     const { data, error } = await supabase.from("sales_posts").select("*").order("created_at", { ascending: false });
     if (error) return Alert.alert("Error", error.message);
     setPosts((data as SalesPost[]) ?? []);
+    await loadInventoryOptions();
+  }
+
+  async function loadInventoryOptions() {
+    const { data, error } = await supabase.from("inventory_items").select("id,name,sku,stock").order("name");
+    if (error) return Alert.alert("Error", error.message);
+    setInventoryOptions((data as InventoryOption[]) ?? []);
   }
 
   async function createPost() {
-    if (!inventoryItemId) {
-      await resolveInventoryBySku(inventorySku);
+    let selectedId = inventoryItemId;
+    let selectedStock = inventoryStock;
+    if (!selectedId) {
+      const resolved = await resolveInventoryBySku(inventorySku);
+      if (resolved) {
+        selectedId = resolved.id;
+        selectedStock = resolved.stock;
+      }
     }
 
-    if (!inventoryItemId) {
+    if (!selectedId) {
       return Alert.alert("Falta inventario", "Debes ingresar o escanear un SKU valido para publicar.");
     }
 
+    if ((selectedStock ?? 0) <= 0) {
+      return Alert.alert("Sin stock", "Este producto tiene stock 0. Debes comprar y abastecerte antes de publicar una venta.");
+    }
+
     const { error } = await supabase.from("sales_posts").insert({
-      inventory_item_id: inventoryItemId,
+      inventory_item_id: selectedId,
       title,
       sale_price: Number(price),
       status: "published"
@@ -49,6 +71,8 @@ export default function SalesPostsScreen() {
     setInventorySku("");
     setInventoryItemId("");
     setInventoryName("");
+    setInventoryStock(null);
+    setInventorySearch("");
     setTitle("");
     setPrice("0");
     load();
@@ -59,24 +83,37 @@ export default function SalesPostsScreen() {
     if (!sku) {
       setInventoryItemId("");
       setInventoryName("");
-      return;
+      setInventoryStock(null);
+      return null;
     }
 
-    const { data, error } = await supabase.from("inventory_items").select("id,name,sku").eq("sku", sku).maybeSingle();
+    const { data, error } = await supabase.from("inventory_items").select("id,name,sku,stock").eq("sku", sku).maybeSingle();
     if (error) {
       Alert.alert("Error", error.message);
-      return;
+      return null;
     }
 
     if (!data) {
       setInventoryItemId("");
       setInventoryName("");
+      setInventoryStock(null);
       Alert.alert("No encontrado", "No existe un item de inventario con ese SKU.");
-      return;
+      return null;
     }
 
     setInventoryItemId(data.id);
     setInventoryName(data.name);
+    setInventoryStock(data.stock);
+    setInventorySearch(data.name);
+    return data as InventoryOption;
+  }
+
+  function selectInventory(item: InventoryOption) {
+    setInventoryItemId(item.id);
+    setInventoryName(item.name);
+    setInventorySku(item.sku);
+    setInventoryStock(item.stock);
+    setInventorySearch(item.name);
   }
 
   async function openScanner() {
@@ -104,6 +141,14 @@ export default function SalesPostsScreen() {
     setShowScanner(false);
     resolveInventoryBySku(data);
   }
+
+  const filteredInventory = inventoryOptions
+    .filter((item) => {
+      const query = inventorySearch.trim().toLowerCase();
+      if (!query) return true;
+      return item.name.toLowerCase().includes(query) || item.sku.toLowerCase().includes(query);
+    })
+    .slice(0, 8);
 
   function onExportSales() {
     const csv = toCsv(
@@ -175,9 +220,36 @@ export default function SalesPostsScreen() {
             </Pressable>
           </View>
         ) : null}
+        <Text style={styles.label}>Buscar y seleccionar inventario disponible</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Buscar por nombre o SKU"
+          value={inventorySearch}
+          onChangeText={(value) => {
+            setInventorySearch(value);
+            setInventoryItemId("");
+            setInventoryName("");
+            setInventoryStock(null);
+          }}
+        />
+        <View style={styles.searchResultsWrap}>
+          {filteredInventory.map((item) => (
+            <Pressable key={item.id} style={styles.resultRow} onPress={() => selectInventory(item)}>
+              <Text style={styles.resultTitle}>{item.name}</Text>
+              <Text style={[styles.resultMeta, item.stock <= 0 && styles.stockDanger]}>
+                SKU: {item.sku} · Stock: {item.stock}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
         <Text style={styles.helperText}>
-          {inventoryItemId ? `Item vinculado: ${inventoryName}` : "Sin item vinculado todavia."}
+          {inventoryItemId
+            ? `Item vinculado: ${inventoryName}${inventoryStock != null ? ` (stock: ${inventoryStock})` : ""}`
+            : "Sin item vinculado todavia."}
         </Text>
+        {inventoryStock != null && inventoryStock <= 0 ? (
+          <Text style={styles.stockWarning}>Stock actual en 0. Debes comprar y abastecerte antes de vender.</Text>
+        ) : null}
 
         <Text style={styles.label}>Titulo de la publicacion</Text>
         <TextInput style={styles.input} placeholder="Ej: Cuaderno universitario 100 hojas" value={title} onChangeText={setTitle} />
@@ -228,6 +300,19 @@ const styles = StyleSheet.create({
     marginBottom: 8
   },
   helperText: { color: theme.colors.muted, marginBottom: 10, fontWeight: "600" },
+  searchResultsWrap: { marginBottom: 8 },
+  resultRow: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    padding: 8,
+    marginBottom: 6,
+    backgroundColor: "#F8FAFC"
+  },
+  resultTitle: { color: theme.colors.text, fontWeight: "700" },
+  resultMeta: { color: theme.colors.muted, marginTop: 2 },
+  stockDanger: { color: theme.colors.danger, fontWeight: "700" },
+  stockWarning: { color: theme.colors.danger, fontWeight: "700", marginBottom: 10 },
   button: { backgroundColor: theme.colors.success, borderRadius: theme.radius.sm, padding: 12 },
   buttonText: { color: "#fff", textAlign: "center", fontWeight: "700" },
   buttonSecondary: {
