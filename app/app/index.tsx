@@ -21,6 +21,20 @@ export default function IndexScreen() {
     setFeedback({ type: "success", text: message });
   }
 
+  function formatAuthError(message: string) {
+    if (message.toLowerCase().includes("invalid api key")) {
+      return [
+        "Clave API invalida.",
+        "En Supabase: Project Settings > API Keys > pestaña «Legacy anon, service_role».",
+        "Copia la clave «anon» (muy larga, empieza con eyJ) y pegala en app/.env como:",
+        "EXPO_PUBLIC_SUPABASE_ANON_JWT=tu_clave_aqui",
+        "O reemplaza el valor de EXPO_PUBLIC_SUPABASE_ANON_KEY por esa misma clave.",
+        "Actualiza el mismo valor en GitHub > Settings > Secrets (Actions) y ejecuta npx expo start --clear."
+      ].join(" ");
+    }
+    return message;
+  }
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setSessionEmail(data.user?.email ?? null);
@@ -45,7 +59,7 @@ export default function IndexScreen() {
     const { error } = await supabase.auth.signUp({ email: normalizedEmail, password });
     setLoading(false);
 
-    if (error) return showError(error.message);
+    if (error) return showError(formatAuthError(error.message));
     showSuccess("Cuenta creada. Revisa tu correo para confirmar.");
   }
 
@@ -59,7 +73,7 @@ export default function IndexScreen() {
     const { data, error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
     setLoading(false);
 
-    if (error) return showError(error.message);
+    if (error) return showError(formatAuthError(error.message));
     setSessionEmail(data.user.email ?? null);
     showSuccess("Sesion iniciada.");
   }
@@ -73,7 +87,7 @@ export default function IndexScreen() {
     const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
     setLoading(false);
 
-    if (error) return showError(error.message);
+    if (error) return showError(formatAuthError(error.message));
     showSuccess("Si el correo existe, Supabase enviara el enlace de recuperacion.");
   }
 

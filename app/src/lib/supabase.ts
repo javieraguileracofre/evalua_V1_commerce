@@ -32,10 +32,13 @@ function getAuthStorage(): SupportedStorage {
 }
 
 const supabaseUrl = normalizeSupabaseUrl(process.env.EXPO_PUBLIC_SUPABASE_URL ?? "");
-const supabaseAnonKey = normalizeEnv(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "");
+const jwtAnon = normalizeEnv(process.env.EXPO_PUBLIC_SUPABASE_ANON_JWT ?? "");
+const genericAnon = normalizeEnv(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "");
+/** Preferir JWT `anon` (eyJ...) si viene en ANON_JWT; la publishable a veces falla si está truncada. */
+const supabaseAnonKey = jwtAnon.length > 0 ? jwtAnon : genericAnon;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn("Faltan EXPO_PUBLIC_SUPABASE_URL o EXPO_PUBLIC_SUPABASE_ANON_KEY");
+  console.warn("Faltan EXPO_PUBLIC_SUPABASE_URL o EXPO_PUBLIC_SUPABASE_ANON_KEY / EXPO_PUBLIC_SUPABASE_ANON_JWT");
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

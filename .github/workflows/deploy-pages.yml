@@ -3,7 +3,8 @@
 # Requisito (una sola vez en GitHub):
 # 1) Repo -> Settings -> Secrets and variables -> Actions -> New repository secret
 #    - EXPO_PUBLIC_SUPABASE_URL
-#    - EXPO_PUBLIC_SUPABASE_ANON_KEY
+#    - EXPO_PUBLIC_SUPABASE_ANON_KEY (recomendado: JWT anon eyJ... de Legacy API Keys)
+#    - Opcional: EXPO_PUBLIC_SUPABASE_ANON_JWT (si existe, tiene prioridad sobre ANON_KEY)
 # 2) Repo -> Settings -> Pages -> Build and deployment -> Source: GitHub Actions
 #
 # Luego: Actions -> "Deploy web to GitHub Pages" -> Run workflow (o push a main).
@@ -47,6 +48,7 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_SUPABASE_ANON_JWT: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_JWT }}
         run: npx expo export --platform web
 
       - name: Ensure Jekyll is disabled

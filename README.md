@@ -19,19 +19,22 @@ Base inicial para una app web + movil (Android/iOS) con:
 ## 3) Configurar Supabase
 1. Crea un proyecto en Supabase.
 2. Ejecuta `supabase/schema.sql` en el SQL Editor.
-3. Copia `Project URL` y la clave publica para el cliente:
-   - Puedes usar la **Publishable key** (`sb_publishable_...`) desde **API Keys**, copiando con el boton **Copy** (evita errores tipo `0` vs `O`).
-   - Si ves **Invalid API key**, usa la clave **anon** legacy (`eyJ...`) en la pestana **Legacy anon, service_role API keys**.
+3. Copia `Project URL` y una clave valida para el cliente:
+   - **Recomendado:** clave **anon** JWT (`eyJ...`) en **Project Settings > API Keys > pestana «Legacy anon, service_role»** (boton **Reveal** / **Copy** en la fila `anon`). Pegala en `app/.env` como `EXPO_PUBLIC_SUPABASE_ANON_JWT=...` o reemplaza `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+   - La clave **Publishable** (`sb_publishable_...`) a veces falla con **Invalid API key** si esta incompleta o el proyecto aun valida distinto; si pasa, usa siempre la **anon** `eyJ...` como arriba.
+   - Verifica localmente: `cd app` y luego `npm run verify-supabase` (debe imprimir HTTP distinto de **401**).
 
 ## 4) Configurar variables de entorno
 En `app/` crea `.env` con:
 
 ```env
 EXPO_PUBLIC_SUPABASE_URL=https://TU-PROYECTO.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=TU_ANON_KEY
+EXPO_PUBLIC_SUPABASE_ANON_JWT=eyJ...anon_legacy...
 ```
 
-Si publicas con **GitHub Actions**, los mismos valores deben existir como **Repository secrets** (`EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`).
+Opcional: si no usas `ANON_JWT`, puedes usar solo `EXPO_PUBLIC_SUPABASE_ANON_KEY` con el mismo JWT `eyJ...`.
+
+Si publicas con **GitHub Actions**, crea **Repository secrets** con los mismos nombres y valores: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` y, si lo usas, `EXPO_PUBLIC_SUPABASE_ANON_JWT`.
 
 ## 5) Ejecutar local
 ```bash

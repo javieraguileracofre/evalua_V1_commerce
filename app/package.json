@@ -4,6 +4,7 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
+    "verify-supabase": "node ../scripts/verify-supabase-key.cjs",
     "start": "expo start",
     "web": "expo start --web",
     "android": "expo start --android",

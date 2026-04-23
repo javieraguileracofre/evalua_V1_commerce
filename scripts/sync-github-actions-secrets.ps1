@@ -17,12 +17,21 @@ if ($LASTEXITCODE -ne 0) {
 $lines = Get-Content $envFile
 $url = ($lines | Where-Object { $_ -match '^\s*EXPO_PUBLIC_SUPABASE_URL=' }) -replace '^\s*EXPO_PUBLIC_SUPABASE_URL=\s*', '' | ForEach-Object { $_.Trim() }
 $key = ($lines | Where-Object { $_ -match '^\s*EXPO_PUBLIC_SUPABASE_ANON_KEY=' }) -replace '^\s*EXPO_PUBLIC_SUPABASE_ANON_KEY=\s*', '' | ForEach-Object { $_.Trim() }
+$jwt = ($lines | Where-Object { $_ -match '^\s*EXPO_PUBLIC_SUPABASE_ANON_JWT=' }) -replace '^\s*EXPO_PUBLIC_SUPABASE_ANON_JWT=\s*', '' | ForEach-Object { $_.Trim() }
 
-if (-not $url -or -not $key) {
-  throw "Faltan EXPO_PUBLIC_SUPABASE_URL o EXPO_PUBLIC_SUPABASE_ANON_KEY en app/.env"
+if (-not $url) {
+  throw "Falta EXPO_PUBLIC_SUPABASE_URL en app/.env"
+}
+if (-not $key -and -not $jwt) {
+  throw "Falta EXPO_PUBLIC_SUPABASE_ANON_KEY o EXPO_PUBLIC_SUPABASE_ANON_JWT en app/.env"
 }
 
 gh secret set EXPO_PUBLIC_SUPABASE_URL --repo $repo --body $url
-gh secret set EXPO_PUBLIC_SUPABASE_ANON_KEY --repo $repo --body $key
+if ($key) {
+  gh secret set EXPO_PUBLIC_SUPABASE_ANON_KEY --repo $repo --body $key
+}
+if ($jwt) {
+  gh secret set EXPO_PUBLIC_SUPABASE_ANON_JWT --repo $repo --body $jwt
+}
 
 Write-Host "Listo: secretos actualizados en $repo"
