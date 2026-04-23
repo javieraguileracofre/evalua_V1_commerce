@@ -210,6 +210,16 @@ export default function IndexScreen() {
     showSuccess("Si el correo existe, Supabase enviara el enlace de recuperacion.");
   }
 
+  async function onSignOut() {
+    setFeedback(null);
+    setLoading(true);
+    const { error } = await supabase.auth.signOut();
+    setLoading(false);
+    if (error) return showError(formatAuthError(error.message));
+    setSessionEmail(null);
+    showSuccess("Sesion cerrada.");
+  }
+
   if (!fontsLoaded && !fontError) {
     return (
       <View style={styles.root}>
@@ -369,6 +379,15 @@ export default function IndexScreen() {
           <Link style={[styles.sessionLink, { fontFamily: font.extra }]} href="/quick-results">
             Ir a resultados rapidos
           </Link>
+          <Pressable
+            style={[styles.signOutButton, loading && styles.btnDisabled]}
+            onPress={onSignOut}
+            disabled={loading}
+          >
+            <Text style={[styles.signOutButtonText, { fontFamily: font.extra }]}>
+              {loading ? "Cerrando..." : "Cerrar sesion"}
+            </Text>
+          </Pressable>
         </>
       )}
     </View>
@@ -691,5 +710,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
     marginTop: 10
+  },
+  signOutButton: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.45)",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: "rgba(239, 68, 68, 0.1)"
+  },
+  signOutButtonText: {
+    color: "#fecaca",
+    fontSize: 14,
+    fontWeight: "800",
+    textAlign: "center"
   }
 });

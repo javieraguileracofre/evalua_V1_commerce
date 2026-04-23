@@ -54,6 +54,7 @@ export default function InventoryScreen() {
   const [skuManual, setSkuManual] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [scanLocked, setScanLocked] = useState(false);
+  const [signOutLoading, setSignOutLoading] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
 
   useEffect(() => {
@@ -155,6 +156,14 @@ export default function InventoryScreen() {
     }
   }
 
+  async function onSignOut() {
+    setSignOutLoading(true);
+    const { error } = await supabase.auth.signOut();
+    setSignOutLoading(false);
+    if (error) return Alert.alert("Error", error.message);
+    Alert.alert("Sesion", "Sesion cerrada.");
+  }
+
   return (
     <Screen>
       <Card>
@@ -167,6 +176,11 @@ export default function InventoryScreen() {
           </Pressable>
           <Pressable style={styles.smallButton} onPress={onExportInventoryPdf}>
             <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Descargar PDF</Text>
+          </Pressable>
+          <Pressable style={[styles.signOutButton, signOutLoading && styles.buttonDisabled]} onPress={onSignOut} disabled={signOutLoading}>
+            <Text style={[styles.signOutButtonText, { fontFamily: font.semi }]}>
+              {signOutLoading ? "Cerrando..." : "Cerrar sesion"}
+            </Text>
           </Pressable>
         </View>
       </Card>
@@ -275,6 +289,16 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(196, 163, 90, 0.1)"
   },
   buttonSecondaryText: { color: theme.colors.secondary, textAlign: "center", fontWeight: "700" },
+  signOutButton: {
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.45)",
+    borderRadius: theme.radius.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(239, 68, 68, 0.1)"
+  },
+  signOutButtonText: { color: "#fecaca", textAlign: "center", fontWeight: "700" },
+  buttonDisabled: { opacity: 0.6 },
   scannerWrap: { marginBottom: 12 },
   scanner: { width: "100%", height: 260, borderRadius: theme.radius.sm, overflow: "hidden", marginBottom: 10 },
   itemName: { fontWeight: "700", color: theme.colors.text },

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Link } from "expo-router";
 import {
   PlusJakartaSans_400Regular,
@@ -101,6 +101,7 @@ export default function QuickResultsScreen() {
   const [inventory, setInventory] = useState<InventoryLite[]>([]);
   const [sales, setSales] = useState<SaleLite[]>([]);
   const [period, setPeriod] = useState<QuickPeriod>("month");
+  const [signOutLoading, setSignOutLoading] = useState(false);
 
   useEffect(() => {
     load();
@@ -117,6 +118,14 @@ export default function QuickResultsScreen() {
 
     setInventory((inventoryRes.data as InventoryLite[]) ?? []);
     setSales((salesRes.data as SaleLite[]) ?? []);
+  }
+
+  async function onSignOut() {
+    setSignOutLoading(true);
+    const { error } = await supabase.auth.signOut();
+    setSignOutLoading(false);
+    if (error) return Alert.alert("Error", error.message);
+    Alert.alert("Sesion", "Sesion cerrada.");
   }
 
   const { ventasTotal, comprasTotal, resultado, stockDisponible, monthlyAccumulated, dailyAccumulated, periodLabel } = useMemo(() => {
@@ -208,6 +217,11 @@ export default function QuickResultsScreen() {
               Volver al inicio
             </Link>
             <Text style={[styles.headerTitle, { fontFamily: font.bold }]}>Resultados rapidos</Text>
+            <Pressable style={[styles.signOutButton, signOutLoading && styles.buttonDisabled]} onPress={onSignOut} disabled={signOutLoading}>
+              <Text style={[styles.signOutButtonText, { fontFamily: font.semi }]}>
+                {signOutLoading ? "Cerrando..." : "Cerrar sesion"}
+              </Text>
+            </Pressable>
           </View>
           <View style={styles.filterRow}>
             <Text style={[styles.filterLabel, { fontFamily: font.semi }]}>Periodo:</Text>
@@ -343,5 +357,15 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: theme.colors.primary
   },
-  chartValue: { color: theme.colors.secondary, fontSize: 12, fontWeight: "700" }
+  chartValue: { color: theme.colors.secondary, fontSize: 12, fontWeight: "700" },
+  signOutButton: {
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.45)",
+    borderRadius: theme.radius.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(239, 68, 68, 0.1)"
+  },
+  signOutButtonText: { color: "#fecaca", textAlign: "center", fontWeight: "700" },
+  buttonDisabled: { opacity: 0.6 }
 });
