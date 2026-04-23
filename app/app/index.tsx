@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { startTransition, useEffect, useState } from "react";
 import { Link } from "expo-router";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { supabase } from "@/lib/supabase";
@@ -12,6 +12,8 @@ export default function IndexScreen() {
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "error" | "success"; text: string } | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   function showError(message: string) {
     setFeedback({ type: "error", text: message });
@@ -36,18 +38,33 @@ export default function IndexScreen() {
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setSessionEmail(data.user?.email ?? null);
-    });
+    setHydrated(true);
+  }, []);
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSessionEmail(session?.user?.email ?? null);
-    });
+  useEffect(() => {
+    if (!hydrated) return;
+
+    let unsubscribe: (() => void) | null = null;
+    const initTimer = setTimeout(async () => {
+      const { data } = await supabase.auth.getUser();
+      startTransition(() => {
+        setSessionEmail(data.user?.email ?? null);
+        setAuthChecked(true);
+      });
+
+      const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+        startTransition(() => {
+          setSessionEmail(session?.user?.email ?? null);
+        });
+      });
+      unsubscribe = () => authListener.subscription.unsubscribe();
+    }, 0);
 
     return () => {
-      authListener.subscription.unsubscribe();
+      clearTimeout(initTimer);
+      if (unsubscribe) unsubscribe();
     };
-  }, []);
+  }, [hydrated]);
 
   async function onSignUp() {
     const normalizedEmail = email.trim().toLowerCase();
@@ -98,7 +115,11 @@ export default function IndexScreen() {
         <Text style={styles.subtitle}>Diseno inspirado en evalua_V1</Text>
       </Card>
 
-      {!sessionEmail ? (
+      {!authChecked ? (
+        <Card>
+          <Text style={styles.subtitle}>Cargando sesion...</Text>
+        </Card>
+      ) : !sessionEmail ? (
         <Card>
           <TextInput
             style={styles.input}
