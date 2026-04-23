@@ -19,7 +19,9 @@ Base inicial para una app web + movil (Android/iOS) con:
 ## 3) Configurar Supabase
 1. Crea un proyecto en Supabase.
 2. Ejecuta `supabase/schema.sql` en el SQL Editor.
-3. Copia `Project URL` y `anon key`.
+3. Copia `Project URL` y la clave publica para el cliente:
+   - Puedes usar la **Publishable key** (`sb_publishable_...`) desde **API Keys**, copiando con el boton **Copy** (evita errores tipo `0` vs `O`).
+   - Si ves **Invalid API key**, usa la clave **anon** legacy (`eyJ...`) en la pestana **Legacy anon, service_role API keys**.
 
 ## 4) Configurar variables de entorno
 En `app/` crea `.env` con:
@@ -28,6 +30,8 @@ En `app/` crea `.env` con:
 EXPO_PUBLIC_SUPABASE_URL=https://TU-PROYECTO.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=TU_ANON_KEY
 ```
+
+Si publicas con **GitHub Actions**, los mismos valores deben existir como **Repository secrets** (`EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`).
 
 ## 5) Ejecutar local
 ```bash
