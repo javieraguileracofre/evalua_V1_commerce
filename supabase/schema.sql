@@ -5,9 +5,20 @@ create extension if not exists "uuid-ossp";
 create table if not exists public.users_profile (
   id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
+  first_name text not null default '',
+  last_name text not null default '',
+  rut text not null default '',
+  phone text not null default '',
+  company text,
   role text not null default 'seller' check (role in ('admin', 'seller', 'viewer')),
   created_at timestamptz not null default now()
 );
+
+alter table public.users_profile add column if not exists first_name text not null default '';
+alter table public.users_profile add column if not exists last_name text not null default '';
+alter table public.users_profile add column if not exists rut text not null default '';
+alter table public.users_profile add column if not exists phone text not null default '';
+alter table public.users_profile add column if not exists company text;
 
 -- Inventario
 create table if not exists public.inventory_items (
@@ -50,6 +61,42 @@ create policy "users_profile_self_update"
 on public.users_profile for update
 using (auth.uid() = id)
 with check (auth.uid() = id);
+
+-- Crear perfil automaticamente cuando se crea un usuario en auth.users
+create or replace function public.handle_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.users_profile (id, email, role, first_name, last_name, rut, phone, company)
+  values (
+    new.id,
+    coalesce(new.email, ''),
+    'seller',
+    coalesce(new.raw_user_meta_data->>'first_name', ''),
+    coalesce(new.raw_user_meta_data->>'last_name', ''),
+    coalesce(new.raw_user_meta_data->>'rut', ''),
+    coalesce(new.raw_user_meta_data->>'phone', ''),
+    nullif(new.raw_user_meta_data->>'company', '')
+  )
+  on conflict (id) do update
+  set
+    email = excluded.email,
+    first_name = excluded.first_name,
+    last_name = excluded.last_name,
+    rut = excluded.rut,
+    phone = excluded.phone,
+    company = excluded.company;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_auth_user_created on auth.users;
+create trigger trg_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_auth_user();
 
 -- Inventario: cada usuario administra lo suyo
 create policy "inventory_owner_select"

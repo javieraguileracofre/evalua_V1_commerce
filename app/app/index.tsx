@@ -75,6 +75,12 @@ export default function IndexScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [rut, setRut] = useState("");
+  const [phone, setPhone] = useState("");
+  const [company, setCompany] = useState("");
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "error" | "success"; text: string } | null>(null);
@@ -158,10 +164,26 @@ export default function IndexScreen() {
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail) return showError("Ingresa un correo.");
     if (password.length < 6) return showError("La contrasena debe tener al menos 6 caracteres.");
+    if (!firstName.trim()) return showError("Ingresa el nombre.");
+    if (!lastName.trim()) return showError("Ingresa el apellido.");
+    if (!rut.trim()) return showError("Ingresa el RUT.");
+    if (!phone.trim()) return showError("Ingresa el telefono.");
 
     setFeedback(null);
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email: normalizedEmail, password });
+    const { error } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          rut: rut.trim(),
+          phone: phone.trim(),
+          company: company.trim() || null
+        }
+      }
+    });
     setLoading(false);
 
     if (error) {
@@ -172,6 +194,7 @@ export default function IndexScreen() {
       return showError(msg);
     }
     setEmailCooldownSec(60);
+    setAuthMode("login");
     showSuccess("Cuenta creada. Revisa tu correo para confirmar.");
   }
 
@@ -302,6 +325,71 @@ export default function IndexScreen() {
             </View>
           ) : null}
 
+          {authMode === "signup" ? (
+            <>
+              <Text style={[styles.formLabel, { fontFamily: font.extra }]}>Nombre</Text>
+              <TextInput
+                style={[styles.formControl, { fontFamily: font.regular }]}
+                placeholder="Ej: Javier"
+                placeholderTextColor="#64748b"
+                value={firstName}
+                onChangeText={(value) => {
+                  setFirstName(value);
+                  if (feedback) setFeedback(null);
+                }}
+              />
+
+              <Text style={[styles.formLabel, { fontFamily: font.extra }]}>Apellido</Text>
+              <TextInput
+                style={[styles.formControl, { fontFamily: font.regular }]}
+                placeholder="Ej: Aguilera"
+                placeholderTextColor="#64748b"
+                value={lastName}
+                onChangeText={(value) => {
+                  setLastName(value);
+                  if (feedback) setFeedback(null);
+                }}
+              />
+
+              <Text style={[styles.formLabel, { fontFamily: font.extra }]}>RUT</Text>
+              <TextInput
+                style={[styles.formControl, { fontFamily: font.regular }]}
+                placeholder="Ej: 12.345.678-9"
+                placeholderTextColor="#64748b"
+                value={rut}
+                onChangeText={(value) => {
+                  setRut(value);
+                  if (feedback) setFeedback(null);
+                }}
+              />
+
+              <Text style={[styles.formLabel, { fontFamily: font.extra }]}>Telefono</Text>
+              <TextInput
+                style={[styles.formControl, { fontFamily: font.regular }]}
+                placeholder="Ej: +56912345678"
+                placeholderTextColor="#64748b"
+                keyboardType="phone-pad"
+                value={phone}
+                onChangeText={(value) => {
+                  setPhone(value);
+                  if (feedback) setFeedback(null);
+                }}
+              />
+
+              <Text style={[styles.formLabel, { fontFamily: font.extra }]}>Empresa (opcional)</Text>
+              <TextInput
+                style={[styles.formControl, { fontFamily: font.regular }]}
+                placeholder="Ej: Evalua Soluciones"
+                placeholderTextColor="#64748b"
+                value={company}
+                onChangeText={(value) => {
+                  setCompany(value);
+                  if (feedback) setFeedback(null);
+                }}
+              />
+            </>
+          ) : null}
+
           <Text style={[styles.formLabel, { fontFamily: font.extra }]}>Correo corporativo</Text>
           <TextInput
             style={[styles.formControl, { fontFamily: font.regular }]}
@@ -319,7 +407,7 @@ export default function IndexScreen() {
 
           <Text style={[styles.formLabel, { fontFamily: font.extra }]}>Contraseña</Text>
           <TextInput
-            style={[styles.formControl, styles.formControlLast, { fontFamily: font.regular }]}
+            style={[styles.formControl, authMode === "login" && styles.formControlLast, { fontFamily: font.regular }]}
             placeholder="••••••••••••"
             placeholderTextColor="#64748b"
             secureTextEntry
@@ -331,7 +419,11 @@ export default function IndexScreen() {
             }}
           />
 
-          <Pressable disabled={loading} onPress={onSignIn} style={({ pressed }) => [pressed && !loading && styles.btnPressLift]}>
+          <Pressable
+            disabled={loading}
+            onPress={authMode === "signup" ? onSignUp : onSignIn}
+            style={({ pressed }) => [pressed && !loading && styles.btnPressLift]}
+          >
             <LinearGradient
               colors={["#1f4168", "#162f4d"]}
               start={{ x: 0, y: 0 }}
@@ -340,19 +432,23 @@ export default function IndexScreen() {
             >
               <MaterialCommunityIcons name="login-variant" size={18} color="#f8fafc" />
               <Text style={[styles.btnLoginText, { fontFamily: font.extra }]}>
-                {loading ? "Procesando…" : "Entrar al sistema"}
+                {loading ? "Procesando…" : authMode === "signup" ? "Crear cuenta y continuar" : "Entrar al sistema"}
               </Text>
             </LinearGradient>
           </Pressable>
 
           <View style={styles.extraRow}>
-            <Pressable onPress={onSignUp} disabled={loading}>
-              <Text style={[styles.extraLink, { fontFamily: font.semi }]}>
-                {emailCooldownSec > 0 ? `Crear cuenta (${emailCooldownSec}s)` : "Crear cuenta"}
-              </Text>
-            </Pressable>
+            {authMode === "login" ? (
+              <Pressable onPress={() => setAuthMode("signup")} disabled={loading}>
+                <Text style={[styles.extraLink, { fontFamily: font.semi }]}>Crear cuenta</Text>
+              </Pressable>
+            ) : (
+              <Pressable onPress={() => setAuthMode("login")} disabled={loading}>
+                <Text style={[styles.extraLink, { fontFamily: font.semi }]}>Ya tengo cuenta</Text>
+              </Pressable>
+            )}
             <Text style={[styles.extraDot, { fontFamily: font.regular }]}> · </Text>
-            <Pressable onPress={onRecover} disabled={loading || emailCooldownSec > 0}>
+            <Pressable onPress={onRecover} disabled={loading || emailCooldownSec > 0 || authMode === "signup"}>
               <Text style={[styles.extraLink, (loading || emailCooldownSec > 0) && styles.extraLinkDisabled, { fontFamily: font.semi }]}>
                 {emailCooldownSec > 0 ? `Recuperar (${emailCooldownSec}s)` : "Recuperar acceso"}
               </Text>
@@ -370,14 +466,8 @@ export default function IndexScreen() {
         <>
           <Text style={[styles.sessionLabel, { fontFamily: font.regular }]}>Sesión activa</Text>
           <Text style={[styles.sessionEmail, { fontFamily: font.semi }]}>{sessionEmail}</Text>
-          <Link style={[styles.sessionLink, { fontFamily: font.extra }]} href="/inventory">
-            Ir a inventario
-          </Link>
-          <Link style={[styles.sessionLink, { fontFamily: font.extra }]} href="/sales-posts">
-            Ir a publicaciones de venta
-          </Link>
-          <Link style={[styles.sessionLink, { fontFamily: font.extra }]} href="/quick-results">
-            Ir a resultados rapidos
+          <Link style={[styles.sessionLink, { fontFamily: font.extra }]} href="/modules">
+            Ir a modulos
           </Link>
           <Pressable
             style={[styles.signOutButton, loading && styles.btnDisabled]}
