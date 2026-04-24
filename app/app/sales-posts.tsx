@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, FlatList, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import {
   PlusJakartaSans_400Regular,
@@ -222,8 +222,8 @@ export default function SalesPostsScreen() {
   }
 
   function onGoBack() {
-    if (router.canGoBack()) {
-      router.back();
+    if (Platform.OS === "web" && typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
       return;
     }
     router.replace("/modules");
@@ -388,10 +388,8 @@ export default function SalesPostsScreen() {
             </Pressable>
           </Card>
 
-          <FlatList
-            data={posts}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {posts.map((item) => (
               <Card>
                 <Text style={[styles.itemName, { fontFamily: font.bold }]}>{item.title}</Text>
                 <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Precio: {formatCurrencyCl(item.sale_price)}</Text>
@@ -400,8 +398,13 @@ export default function SalesPostsScreen() {
                   <Text style={[styles.linkLikeButtonText, { fontFamily: font.bold }]}>Descargar comprobante PDF</Text>
                 </Pressable>
               </Card>
-            )}
-          />
+            ))}
+            {!posts.length ? (
+              <Card>
+                <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>No hay publicaciones registradas.</Text>
+              </Card>
+            ) : null}
+          </ScrollView>
         </View>
       </View>
     </Screen>
