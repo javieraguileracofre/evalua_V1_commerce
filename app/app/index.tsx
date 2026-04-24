@@ -466,7 +466,7 @@ export default function IndexScreen() {
         <>
           <Text style={[styles.sessionLabel, { fontFamily: font.regular }]}>Sesión activa</Text>
           <Text style={[styles.sessionEmail, { fontFamily: font.semi }]}>{sessionEmail}</Text>
-          <Link href="/sales-posts" asChild>
+          <Link href="/modules" asChild>
             <Pressable style={styles.versionFreeButton}>
               <Text style={[styles.versionFreeButtonText, { fontFamily: font.extra }]}>Version Free</Text>
             </Pressable>

@@ -40,20 +40,26 @@ export default function ModulesScreen() {
       </Card>
 
       <Card>
-        <Text style={[styles.sectionTitle, { fontFamily: font.bold }]}>Segunda vista</Text>
+        <Text style={[styles.sectionTitle, { fontFamily: font.bold }]}>Version Free</Text>
         <Text style={[styles.sectionText, { fontFamily: font.regular }]}>
-          Esta vista centraliza accesos a Post venta y version PRO.
+          Desde aqui puedes abrir los modulos operativos de venta, inventario y resultados.
         </Text>
 
         <Link href="/sales-posts" asChild>
           <Pressable style={styles.button}>
-            <Text style={[styles.buttonText, { fontFamily: font.bold }]}>Ir a Post venta</Text>
+            <Text style={[styles.buttonText, { fontFamily: font.bold }]}>Modulo de venta</Text>
           </Pressable>
         </Link>
 
-        <Link href="/pro" asChild>
+        <Link href="/inventory" asChild>
           <Pressable style={styles.buttonSecondary}>
-            <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Ir a version PRO</Text>
+            <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Modulo de inventario</Text>
+          </Pressable>
+        </Link>
+
+        <Link href="/quick-results" asChild>
+          <Pressable style={styles.buttonSecondary}>
+            <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Modulo de resultados</Text>
           </Pressable>
         </Link>
       </Card>
