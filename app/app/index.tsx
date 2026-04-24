@@ -466,8 +466,15 @@ export default function IndexScreen() {
         <>
           <Text style={[styles.sessionLabel, { fontFamily: font.regular }]}>Sesión activa</Text>
           <Text style={[styles.sessionEmail, { fontFamily: font.semi }]}>{sessionEmail}</Text>
-          <Link style={[styles.sessionLink, { fontFamily: font.extra }]} href="/modules">
-            Ir a modulos
+          <Link href="/sales-posts" asChild>
+            <Pressable style={styles.versionFreeButton}>
+              <Text style={[styles.versionFreeButtonText, { fontFamily: font.extra }]}>Version Free</Text>
+            </Pressable>
+          </Link>
+          <Link href="/pro" asChild>
+            <Pressable style={styles.versionProButton}>
+              <Text style={[styles.versionProButtonText, { fontFamily: font.extra }]}>Version Pro</Text>
+            </Pressable>
           </Link>
           <Pressable
             style={[styles.signOutButton, loading && styles.btnDisabled]}
@@ -795,11 +802,35 @@ const styles = StyleSheet.create({
     color: pv.text,
     marginBottom: 18
   },
-  sessionLink: {
-    color: pv.gold,
-    fontSize: 15,
+  versionFreeButton: {
+    marginTop: 10,
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    backgroundColor: "#1f4168",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)"
+  },
+  versionFreeButtonText: {
+    color: "#f8fafc",
+    fontSize: 14,
     fontWeight: "800",
-    marginTop: 10
+    textAlign: "center"
+  },
+  versionProButton: {
+    marginTop: 10,
+    borderRadius: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    backgroundColor: "rgba(196, 163, 90, 0.14)",
+    borderWidth: 1,
+    borderColor: "rgba(196, 163, 90, 0.5)"
+  },
+  versionProButtonText: {
+    color: pv.gold,
+    fontSize: 14,
+    fontWeight: "800",
+    textAlign: "center"
   },
   signOutButton: {
     marginTop: 16,
