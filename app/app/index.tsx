@@ -471,7 +471,7 @@ export default function IndexScreen() {
               <Text style={[styles.versionFreeButtonText, { fontFamily: font.extra }]}>Version Free</Text>
             </Pressable>
           </Link>
-          <Link href="/pro" asChild>
+          <Link href="/pro-masters" asChild>
             <Pressable style={styles.versionProButton}>
               <Text style={[styles.versionProButtonText, { fontFamily: font.extra }]}>Version Pro</Text>
             </Pressable>
