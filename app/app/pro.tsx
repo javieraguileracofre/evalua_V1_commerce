@@ -48,8 +48,13 @@ export default function ProScreen() {
 
       <Card>
         <Text style={[styles.sectionTitle, { fontFamily: font.bold }]}>Accesos PRO</Text>
-        <Link href="/quick-results" asChild>
+        <Link href="/pro-masters" asChild>
           <Pressable style={styles.button}>
+            <Text style={[styles.buttonText, { fontFamily: font.bold }]}>Clientes y proveedores (maestros)</Text>
+          </Pressable>
+        </Link>
+        <Link href="/quick-results" asChild>
+          <Pressable style={styles.buttonSecondary}>
             <Text style={[styles.buttonText, { fontFamily: font.bold }]}>Resultados rapidos</Text>
           </Pressable>
         </Link>

@@ -44,9 +44,41 @@ create table if not exists public.sales_posts (
   created_at timestamptz not null default now()
 );
 
+-- Maestros PRO: clientes
+create table if not exists public.customers_master (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  business_name text not null,
+  rut text,
+  email text,
+  phone text,
+  address text,
+  contact_name text,
+  payment_terms text,
+  status text not null default 'active' check (status in ('active', 'inactive')),
+  created_at timestamptz not null default now()
+);
+
+-- Maestros PRO: proveedores
+create table if not exists public.suppliers_master (
+  id uuid primary key default uuid_generate_v4(),
+  owner_id uuid not null references auth.users(id) on delete cascade,
+  business_name text not null,
+  rut text,
+  email text,
+  phone text,
+  address text,
+  contact_name text,
+  payment_terms text,
+  status text not null default 'active' check (status in ('active', 'inactive')),
+  created_at timestamptz not null default now()
+);
+
 alter table public.users_profile enable row level security;
 alter table public.inventory_items enable row level security;
 alter table public.sales_posts enable row level security;
+alter table public.customers_master enable row level security;
+alter table public.suppliers_master enable row level security;
 
 -- Perfil: cada usuario ve/edita solo su perfil
 create policy "users_profile_self_select"
@@ -126,6 +158,34 @@ on public.sales_posts for update
 using (auth.uid() = owner_id)
 with check (auth.uid() = owner_id);
 
+-- Maestros clientes: cada usuario administra lo suyo
+create policy "customers_owner_select"
+on public.customers_master for select
+using (auth.uid() = owner_id);
+
+create policy "customers_owner_insert"
+on public.customers_master for insert
+with check (auth.uid() = owner_id);
+
+create policy "customers_owner_update"
+on public.customers_master for update
+using (auth.uid() = owner_id)
+with check (auth.uid() = owner_id);
+
+-- Maestros proveedores: cada usuario administra lo suyo
+create policy "suppliers_owner_select"
+on public.suppliers_master for select
+using (auth.uid() = owner_id);
+
+create policy "suppliers_owner_insert"
+on public.suppliers_master for insert
+with check (auth.uid() = owner_id);
+
+create policy "suppliers_owner_update"
+on public.suppliers_master for update
+using (auth.uid() = owner_id)
+with check (auth.uid() = owner_id);
+
 -- Trigger para completar owner_id desde auth.uid()
 create or replace function public.set_owner_id()
 returns trigger
@@ -148,4 +208,14 @@ for each row execute function public.set_owner_id();
 drop trigger if exists trg_sales_owner on public.sales_posts;
 create trigger trg_sales_owner
 before insert on public.sales_posts
+for each row execute function public.set_owner_id();
+
+drop trigger if exists trg_customers_owner on public.customers_master;
+create trigger trg_customers_owner
+before insert on public.customers_master
+for each row execute function public.set_owner_id();
+
+drop trigger if exists trg_suppliers_owner on public.suppliers_master;
+create trigger trg_suppliers_owner
+before insert on public.suppliers_master
 for each row execute function public.set_owner_id();
