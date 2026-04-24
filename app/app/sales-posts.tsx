@@ -238,6 +238,29 @@ export default function SalesPostsScreen() {
         </View>
       </Card>
       <Card>
+        <Text style={[styles.quickAccessTitle, { fontFamily: font.bold }]}>Modulos Free</Text>
+        <Text style={[styles.quickAccessSubtitle, { fontFamily: font.regular }]}>
+          Accesos directos a venta, inventario y resultados.
+        </Text>
+        <View style={styles.quickAccessRow}>
+          <Link href="/sales-posts" asChild>
+            <Pressable style={styles.quickAccessButton}>
+              <Text style={[styles.quickAccessButtonText, { fontFamily: font.bold }]}>Venta</Text>
+            </Pressable>
+          </Link>
+          <Link href="/inventory" asChild>
+            <Pressable style={styles.quickAccessButton}>
+              <Text style={[styles.quickAccessButtonText, { fontFamily: font.bold }]}>Inventario</Text>
+            </Pressable>
+          </Link>
+          <Link href="/quick-results" asChild>
+            <Pressable style={styles.quickAccessButton}>
+              <Text style={[styles.quickAccessButtonText, { fontFamily: font.bold }]}>Resultados</Text>
+            </Pressable>
+          </Link>
+        </View>
+      </Card>
+      <Card>
         <Text style={[styles.title, { fontFamily: font.bold }]}>Post de Venta</Text>
         <Text style={[styles.label, { fontFamily: font.semi }]}>SKU del item en inventario</Text>
         <TextInput
@@ -343,6 +366,18 @@ export default function SalesPostsScreen() {
 const styles = StyleSheet.create({
   headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   linkBack: { color: theme.colors.secondary, fontWeight: "700" },
+  quickAccessTitle: { color: theme.colors.text, fontSize: 16, marginBottom: 4, fontWeight: "700" },
+  quickAccessSubtitle: { color: theme.colors.muted, marginBottom: 10, fontSize: 12 },
+  quickAccessRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  quickAccessButton: {
+    borderWidth: 1,
+    borderColor: theme.colors.secondary,
+    borderRadius: theme.radius.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "rgba(196, 163, 90, 0.1)"
+  },
+  quickAccessButtonText: { color: theme.colors.secondary, textAlign: "center", fontWeight: "700", fontSize: 12 },
   smallButton: {
     borderWidth: 1,
     borderColor: theme.colors.border,
