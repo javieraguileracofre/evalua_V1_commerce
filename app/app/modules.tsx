@@ -40,7 +40,7 @@ export default function ModulesScreen() {
       </Card>
 
       <Card>
-        <Text style={[styles.sectionTitle, { fontFamily: font.bold }]}>Version Free</Text>
+        <Text style={[styles.sectionTitle, { fontFamily: font.bold }]}>Control Inventario / Venta</Text>
         <Text style={[styles.sectionText, { fontFamily: font.regular }]}>
           Desde aqui puedes abrir los modulos operativos de venta, inventario y resultados.
         </Text>

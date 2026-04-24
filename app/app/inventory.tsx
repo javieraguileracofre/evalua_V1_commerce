@@ -32,6 +32,10 @@ function generateSkuBase(value: string) {
   return base || "ITEM";
 }
 
+function digitsOnly(value: string, max = 12) {
+  return value.replace(/\D/g, "").slice(0, max);
+}
+
 export default function InventoryScreen() {
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
@@ -84,10 +88,11 @@ export default function InventoryScreen() {
   }
 
   function handleNameChange(value: string) {
-    setName(value);
+    const limited = value.slice(0, 20);
+    setName(limited);
     if (skuManual) return;
 
-    const base = generateSkuBase(value);
+    const base = generateSkuBase(limited);
     const sequence = String(items.length + 1).padStart(4, "0");
     setSku(`${base}-${sequence}`);
   }
@@ -221,7 +226,7 @@ export default function InventoryScreen() {
           placeholder="Ej: 100"
           placeholderTextColor={theme.colors.muted}
           value={stock}
-          onChangeText={setStock}
+          onChangeText={(value) => setStock(digitsOnly(value))}
           keyboardType="numeric"
         />
 
@@ -231,7 +236,7 @@ export default function InventoryScreen() {
           placeholder="Ej: 1500"
           placeholderTextColor={theme.colors.muted}
           value={cost}
-          onChangeText={setCost}
+          onChangeText={(value) => setCost(digitsOnly(value))}
           keyboardType="numeric"
         />
         <Pressable style={styles.button} onPress={createItem}>

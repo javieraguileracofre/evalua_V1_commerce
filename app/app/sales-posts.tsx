@@ -16,6 +16,11 @@ import { theme } from "@/theme";
 import { saveOrSharePdfFromBase64 } from "@/lib/export";
 import { formatCurrencyCl, formatIntegerCl } from "@/lib/format";
 import { buildSaleReceiptPdfDataUri, buildSalesPdfDataUri } from "@/lib/salesPdf";
+
+function digitsOnly(value: string, max = 12) {
+  return value.replace(/\D/g, "").slice(0, max);
+}
+
 export default function SalesPostsScreen() {
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
@@ -335,8 +340,8 @@ export default function SalesPostsScreen() {
           style={[styles.input, { fontFamily: font.regular }]}
           placeholder="Ej: 2500"
           placeholderTextColor={theme.colors.muted}
-          value={price}
-          onChangeText={setPrice}
+              value={price}
+              onChangeText={(value) => setPrice(digitsOnly(value))}
           keyboardType="numeric"
         />
         <Pressable style={styles.button} onPress={createPost}>

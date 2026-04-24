@@ -468,12 +468,7 @@ export default function IndexScreen() {
           <Text style={[styles.sessionEmail, { fontFamily: font.semi }]}>{sessionEmail}</Text>
           <Link href="/modules" asChild>
             <Pressable style={styles.versionFreeButton}>
-              <Text style={[styles.versionFreeButtonText, { fontFamily: font.extra }]}>Version Free</Text>
-            </Pressable>
-          </Link>
-          <Link href="/pro-masters" asChild>
-            <Pressable style={styles.versionProButton}>
-              <Text style={[styles.versionProButtonText, { fontFamily: font.extra }]}>Version Pro</Text>
+              <Text style={[styles.versionFreeButtonText, { fontFamily: font.extra }]}>Control Inventario / Venta</Text>
             </Pressable>
           </Link>
           <Pressable
@@ -813,21 +808,6 @@ const styles = StyleSheet.create({
   },
   versionFreeButtonText: {
     color: "#f8fafc",
-    fontSize: 14,
-    fontWeight: "800",
-    textAlign: "center"
-  },
-  versionProButton: {
-    marginTop: 10,
-    borderRadius: 12,
-    paddingVertical: 11,
-    paddingHorizontal: 14,
-    backgroundColor: "rgba(196, 163, 90, 0.14)",
-    borderWidth: 1,
-    borderColor: "rgba(196, 163, 90, 0.5)"
-  },
-  versionProButtonText: {
-    color: pv.gold,
     fontSize: 14,
     fontWeight: "800",
     textAlign: "center"
