@@ -7,7 +7,7 @@ import {
   PlusJakartaSans_700Bold,
   useFonts
 } from "@expo-google-fonts/plus-jakarta-sans";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { Card } from "@/components/Card";
 import { supabase } from "@/lib/supabase";
@@ -16,8 +16,12 @@ import { theme } from "@/theme";
 import { saveOrSharePdfFromBase64 } from "@/lib/export";
 import { formatCurrencyCl, formatIntegerCl } from "@/lib/format";
 import { buildSaleReceiptPdfDataUri, buildSalesPdfDataUri } from "@/lib/salesPdf";
+import { useWindowDimensions } from "react-native";
 
 export default function SalesPostsScreen() {
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isWide = width >= 1100;
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
     PlusJakartaSans_600SemiBold,
@@ -217,154 +221,232 @@ export default function SalesPostsScreen() {
     Alert.alert("Sesion", "Sesion cerrada.");
   }
 
+  function onGoBack() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+    router.replace("/modules");
+  }
+
+  const sidebar = (
+    <View style={styles.sidebar}>
+      <Text style={[styles.sidebarTitle, { fontFamily: font.bold }]}>ERP Free</Text>
+      <Text style={[styles.sidebarSubtitle, { fontFamily: font.regular }]}>Navegacion de modulos</Text>
+      <Link href="/sales-posts" asChild>
+        <Pressable style={[styles.sidebarLink, styles.sidebarLinkActive]}>
+          <Text style={[styles.sidebarLinkText, styles.sidebarLinkTextActive, { fontFamily: font.bold }]}>Venta</Text>
+        </Pressable>
+      </Link>
+      <Link href="/inventory" asChild>
+        <Pressable style={styles.sidebarLink}>
+          <Text style={[styles.sidebarLinkText, { fontFamily: font.bold }]}>Inventario</Text>
+        </Pressable>
+      </Link>
+      <Link href="/quick-results" asChild>
+        <Pressable style={styles.sidebarLink}>
+          <Text style={[styles.sidebarLinkText, { fontFamily: font.bold }]}>Resultados</Text>
+        </Pressable>
+      </Link>
+      <Link href="/pro-masters" asChild>
+        <Pressable style={styles.sidebarLink}>
+          <Text style={[styles.sidebarLinkText, { fontFamily: font.bold }]}>Version Pro</Text>
+        </Pressable>
+      </Link>
+    </View>
+  );
+
   return (
     <Screen>
-      <Card>
-        <View style={styles.headerRow}>
-          <Link style={[styles.linkBack, { fontFamily: font.bold }]} href="/">
-            Volver al inicio
-          </Link>
-          <Pressable style={styles.smallButton} onPress={load}>
-            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Actualizar</Text>
-          </Pressable>
-          <Pressable style={styles.smallButton} onPress={onExportSalesPdf}>
-            <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Descargar ventas PDF</Text>
-          </Pressable>
-          <Pressable style={[styles.signOutButton, signOutLoading && styles.buttonDisabled]} onPress={onSignOut} disabled={signOutLoading}>
-            <Text style={[styles.signOutButtonText, { fontFamily: font.semi }]}>
-              {signOutLoading ? "Cerrando..." : "Cerrar sesion"}
-            </Text>
-          </Pressable>
-        </View>
-      </Card>
-      <Card>
-        <Text style={[styles.quickAccessTitle, { fontFamily: font.bold }]}>Modulos Free</Text>
-        <Text style={[styles.quickAccessSubtitle, { fontFamily: font.regular }]}>
-          Accesos directos a venta, inventario y resultados.
-        </Text>
-        <View style={styles.quickAccessRow}>
-          <Link href="/sales-posts" asChild>
-            <Pressable style={styles.quickAccessButton}>
-              <Text style={[styles.quickAccessButtonText, { fontFamily: font.bold }]}>Venta</Text>
-            </Pressable>
-          </Link>
-          <Link href="/inventory" asChild>
-            <Pressable style={styles.quickAccessButton}>
-              <Text style={[styles.quickAccessButtonText, { fontFamily: font.bold }]}>Inventario</Text>
-            </Pressable>
-          </Link>
-          <Link href="/quick-results" asChild>
-            <Pressable style={styles.quickAccessButton}>
-              <Text style={[styles.quickAccessButtonText, { fontFamily: font.bold }]}>Resultados</Text>
-            </Pressable>
-          </Link>
-        </View>
-      </Card>
-      <Card>
-        <Text style={[styles.title, { fontFamily: font.bold }]}>Post de Venta</Text>
-        <Text style={[styles.label, { fontFamily: font.semi }]}>SKU del item en inventario</Text>
-        <TextInput
-          style={[styles.input, { fontFamily: font.regular }]}
-          placeholder="Ingresa o escanea el codigo de barras"
-          placeholderTextColor={theme.colors.muted}
-          value={inventorySku}
-          onChangeText={(value) => {
-            setInventorySku(value);
-            setInventoryItemId("");
-            setInventoryName("");
-          }}
-          onBlur={() => resolveInventoryBySku(inventorySku)}
-        />
-        <Pressable style={styles.buttonSecondary} onPress={openScanner}>
-          <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Escanear codigo de barras con camara</Text>
-        </Pressable>
-        {showScanner ? (
-          <View style={styles.scannerWrap}>
-            <CameraView
-              style={styles.scanner}
-              facing="back"
-              barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "code128", "upc_a", "upc_e", "qr"] }}
-              onBarcodeScanned={onBarcodeScanned}
-            />
-            <Pressable style={styles.buttonSecondary} onPress={() => setShowScanner(false)}>
-              <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Cerrar lector</Text>
-            </Pressable>
-          </View>
-        ) : null}
-        <Text style={[styles.label, { fontFamily: font.semi }]}>Buscar y seleccionar inventario disponible</Text>
-        <TextInput
-          style={[styles.input, { fontFamily: font.regular }]}
-          placeholder="Buscar por nombre o SKU"
-          placeholderTextColor={theme.colors.muted}
-          value={inventorySearch}
-          onChangeText={(value) => {
-            setInventorySearch(value);
-            setInventoryItemId("");
-            setInventoryName("");
-            setInventoryStock(null);
-          }}
-        />
-        <View style={styles.searchResultsWrap}>
-          {filteredInventory.map((item) => (
-            <Pressable key={item.id} style={styles.resultRow} onPress={() => selectInventory(item)}>
-              <Text style={[styles.resultTitle, { fontFamily: font.bold }]}>{item.name}</Text>
-              <Text style={[styles.resultMeta, item.stock <= 0 && styles.stockDanger, { fontFamily: font.regular }]}>
-                SKU: {item.sku} · Stock: {formatIntegerCl(item.stock)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-        <Text style={[styles.helperText, { fontFamily: font.semi }]}>
-          {inventoryItemId
-            ? `Item vinculado: ${inventoryName}${inventoryStock != null ? ` (stock: ${formatIntegerCl(inventoryStock)})` : ""}`
-            : "Sin item vinculado todavia."}
-        </Text>
-        {inventoryStock != null && inventoryStock <= 0 ? (
-          <Text style={[styles.stockWarning, { fontFamily: font.bold }]}>Stock actual en 0. Debes comprar y abastecerte antes de vender.</Text>
-        ) : null}
-
-        <Text style={[styles.label, { fontFamily: font.semi }]}>Titulo de la publicacion</Text>
-        <TextInput
-          style={[styles.input, { fontFamily: font.regular }]}
-          placeholder="Ej: Cuaderno universitario 100 hojas"
-          placeholderTextColor={theme.colors.muted}
-          value={title}
-          onChangeText={setTitle}
-        />
-        <Text style={[styles.label, { fontFamily: font.semi }]}>Precio de venta (CLP)</Text>
-        <TextInput
-          style={[styles.input, { fontFamily: font.regular }]}
-          placeholder="Ej: 2500"
-          placeholderTextColor={theme.colors.muted}
-          value={price}
-          onChangeText={setPrice}
-          keyboardType="numeric"
-        />
-        <Pressable style={styles.button} onPress={createPost}>
-          <Text style={[styles.buttonText, { fontFamily: font.bold }]}>Publicar</Text>
-        </Pressable>
-      </Card>
-
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+      <View style={[styles.shell, !isWide && styles.shellStack]}>
+        {isWide ? sidebar : null}
+        <View style={styles.content}>
+          {!isWide ? <Card>{sidebar}</Card> : null}
           <Card>
-            <Text style={[styles.itemName, { fontFamily: font.bold }]}>{item.title}</Text>
-            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Precio: {formatCurrencyCl(item.sale_price)}</Text>
-            <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Estado: {item.status}</Text>
-            <Pressable style={styles.linkLikeButton} onPress={() => onExportReceipt(item)}>
-              <Text style={[styles.linkLikeButtonText, { fontFamily: font.bold }]}>Descargar comprobante PDF</Text>
+            <View style={styles.headerRow}>
+              <Pressable style={styles.backButton} onPress={onGoBack}>
+                <Text style={[styles.linkBack, { fontFamily: font.bold }]}>Volver atras</Text>
+              </Pressable>
+              <Pressable style={styles.smallButton} onPress={load}>
+                <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Actualizar</Text>
+              </Pressable>
+              <Pressable style={styles.smallButton} onPress={onExportSalesPdf}>
+                <Text style={[styles.smallButtonText, { fontFamily: font.semi }]}>Descargar ventas PDF</Text>
+              </Pressable>
+              <Pressable style={[styles.signOutButton, signOutLoading && styles.buttonDisabled]} onPress={onSignOut} disabled={signOutLoading}>
+                <Text style={[styles.signOutButtonText, { fontFamily: font.semi }]}>
+                  {signOutLoading ? "Cerrando..." : "Cerrar sesion"}
+                </Text>
+              </Pressable>
+            </View>
+          </Card>
+          <Card>
+            <Text style={[styles.quickAccessTitle, { fontFamily: font.bold }]}>Modulos Free</Text>
+            <Text style={[styles.quickAccessSubtitle, { fontFamily: font.regular }]}>
+              Accesos directos a venta, inventario y resultados.
+            </Text>
+            <View style={styles.quickAccessRow}>
+              <Link href="/sales-posts" asChild>
+                <Pressable style={styles.quickAccessButton}>
+                  <Text style={[styles.quickAccessButtonText, { fontFamily: font.bold }]}>Venta</Text>
+                </Pressable>
+              </Link>
+              <Link href="/inventory" asChild>
+                <Pressable style={styles.quickAccessButton}>
+                  <Text style={[styles.quickAccessButtonText, { fontFamily: font.bold }]}>Inventario</Text>
+                </Pressable>
+              </Link>
+              <Link href="/quick-results" asChild>
+                <Pressable style={styles.quickAccessButton}>
+                  <Text style={[styles.quickAccessButtonText, { fontFamily: font.bold }]}>Resultados</Text>
+                </Pressable>
+              </Link>
+            </View>
+          </Card>
+          <Card>
+            <Text style={[styles.title, { fontFamily: font.bold }]}>Post de Venta</Text>
+            <Text style={[styles.label, { fontFamily: font.semi }]}>SKU del item en inventario</Text>
+            <TextInput
+              style={[styles.input, { fontFamily: font.regular }]}
+              placeholder="Ingresa o escanea el codigo de barras"
+              placeholderTextColor={theme.colors.muted}
+              value={inventorySku}
+              onChangeText={(value) => {
+                setInventorySku(value);
+                setInventoryItemId("");
+                setInventoryName("");
+              }}
+              onBlur={() => resolveInventoryBySku(inventorySku)}
+            />
+            <Pressable style={styles.buttonSecondary} onPress={openScanner}>
+              <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Escanear codigo de barras con camara</Text>
+            </Pressable>
+            {showScanner ? (
+              <View style={styles.scannerWrap}>
+                <CameraView
+                  style={styles.scanner}
+                  facing="back"
+                  barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "code128", "upc_a", "upc_e", "qr"] }}
+                  onBarcodeScanned={onBarcodeScanned}
+                />
+                <Pressable style={styles.buttonSecondary} onPress={() => setShowScanner(false)}>
+                  <Text style={[styles.buttonSecondaryText, { fontFamily: font.bold }]}>Cerrar lector</Text>
+                </Pressable>
+              </View>
+            ) : null}
+            <Text style={[styles.label, { fontFamily: font.semi }]}>Buscar y seleccionar inventario disponible</Text>
+            <TextInput
+              style={[styles.input, { fontFamily: font.regular }]}
+              placeholder="Buscar por nombre o SKU"
+              placeholderTextColor={theme.colors.muted}
+              value={inventorySearch}
+              onChangeText={(value) => {
+                setInventorySearch(value);
+                setInventoryItemId("");
+                setInventoryName("");
+                setInventoryStock(null);
+              }}
+            />
+            <View style={styles.searchResultsWrap}>
+              {filteredInventory.map((item) => (
+                <Pressable key={item.id} style={styles.resultRow} onPress={() => selectInventory(item)}>
+                  <Text style={[styles.resultTitle, { fontFamily: font.bold }]}>{item.name}</Text>
+                  <Text style={[styles.resultMeta, item.stock <= 0 && styles.stockDanger, { fontFamily: font.regular }]}>
+                    SKU: {item.sku} · Stock: {formatIntegerCl(item.stock)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={[styles.helperText, { fontFamily: font.semi }]}>
+              {inventoryItemId
+                ? `Item vinculado: ${inventoryName}${inventoryStock != null ? ` (stock: ${formatIntegerCl(inventoryStock)})` : ""}`
+                : "Sin item vinculado todavia."}
+            </Text>
+            {inventoryStock != null && inventoryStock <= 0 ? (
+              <Text style={[styles.stockWarning, { fontFamily: font.bold }]}>Stock actual en 0. Debes comprar y abastecerte antes de vender.</Text>
+            ) : null}
+
+            <Text style={[styles.label, { fontFamily: font.semi }]}>Titulo de la publicacion</Text>
+            <TextInput
+              style={[styles.input, { fontFamily: font.regular }]}
+              placeholder="Ej: Cuaderno universitario 100 hojas"
+              placeholderTextColor={theme.colors.muted}
+              value={title}
+              onChangeText={setTitle}
+            />
+            <Text style={[styles.label, { fontFamily: font.semi }]}>Precio de venta (CLP)</Text>
+            <TextInput
+              style={[styles.input, { fontFamily: font.regular }]}
+              placeholder="Ej: 2500"
+              placeholderTextColor={theme.colors.muted}
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="numeric"
+            />
+            <Pressable style={styles.button} onPress={createPost}>
+              <Text style={[styles.buttonText, { fontFamily: font.bold }]}>Publicar</Text>
             </Pressable>
           </Card>
-        )}
-      />
+
+          <FlatList
+            data={posts}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Card>
+                <Text style={[styles.itemName, { fontFamily: font.bold }]}>{item.title}</Text>
+                <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Precio: {formatCurrencyCl(item.sale_price)}</Text>
+                <Text style={[styles.itemMeta, { fontFamily: font.regular }]}>Estado: {item.status}</Text>
+                <Pressable style={styles.linkLikeButton} onPress={() => onExportReceipt(item)}>
+                  <Text style={[styles.linkLikeButtonText, { fontFamily: font.bold }]}>Descargar comprobante PDF</Text>
+                </Pressable>
+              </Card>
+            )}
+          />
+        </View>
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  shell: { flex: 1, flexDirection: "row", gap: 12 },
+  shellStack: { flexDirection: "column" },
+  sidebar: {
+    width: 220,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.surface,
+    padding: 12,
+    gap: 8,
+    alignSelf: "flex-start"
+  },
+  sidebarTitle: { color: theme.colors.text, fontSize: 16, fontWeight: "700" },
+  sidebarSubtitle: { color: theme.colors.muted, fontSize: 12, marginBottom: 4 },
+  sidebarLink: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: theme.colors.surfaceAlt
+  },
+  sidebarLinkActive: {
+    borderColor: theme.colors.secondary,
+    backgroundColor: "rgba(196, 163, 90, 0.14)"
+  },
+  sidebarLinkText: { color: theme.colors.text, fontSize: 13 },
+  sidebarLinkTextActive: { color: theme.colors.secondary },
+  content: { flex: 1, minWidth: 0 },
   headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  backButton: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.sm,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: theme.colors.surfaceAlt
+  },
   linkBack: { color: theme.colors.secondary, fontWeight: "700" },
   quickAccessTitle: { color: theme.colors.text, fontSize: 16, marginBottom: 4, fontWeight: "700" },
   quickAccessSubtitle: { color: theme.colors.muted, marginBottom: 10, fontSize: 12 },
